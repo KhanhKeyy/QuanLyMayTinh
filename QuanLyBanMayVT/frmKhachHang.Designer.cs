@@ -46,6 +46,7 @@ namespace QuanLyBanMayVT
             this.lblChaoMung.Text = "Chào mừng!";
             this.lblChaoMung.Name = "lblChaoMung";
 
+
             // ── txtTimKiem ───────────────────────────────────────────
             this.txtTimKiem.Size = new Size(260, 32);
             this.txtTimKiem.Location = new Point(430, 24);
@@ -65,7 +66,7 @@ namespace QuanLyBanMayVT
             // ── btnDangXuat ──────────────────────────────────────────
             this.btnDangXuat.Text = "🚪 Đăng xuất";
             this.btnDangXuat.Size = new Size(110, 36);
-            this.btnDangXuat.Location = new Point(1060, 22);
+            this.btnDangXuat.Location = new Point(1060, 22); // Sẽ được tính lại trong Load/Resize
             this.btnDangXuat.Font = new Font("Segoe UI", 9F);
             this.btnDangXuat.BackColor = Color.FromArgb(127, 29, 29);
             this.btnDangXuat.ForeColor = Color.White;

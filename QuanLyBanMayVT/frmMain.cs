@@ -115,31 +115,62 @@ namespace QuanLyBanMayVT
         private void HienThiTrangChu()
         {
             panelContent.Controls.Clear();
+            // Tháo event cũ (nếu có) trước khi gắn lại, tránh đăng ký trùng
+            panelContent.Resize -= PanelContent_Resize;
 
             var lblWelcome = new Label
             {
-                Text = $"Chào mừng, {UserSession.DisplayName}!",
-                Font = new Font("Segoe UI", 20F, FontStyle.Bold),
+                Name      = "lblWelcome",
+                Text      = $"Chào mừng, {UserSession.DisplayName}!",
+                Font      = new Font("Segoe UI", 20F, FontStyle.Bold),
                 ForeColor = Color.FromArgb(99, 179, 237),
-                AutoSize = false,
-                Size = new Size(panelContent.Width, 60),
+                AutoSize  = false,
+                Size      = new Size(600, 60),
                 TextAlign = ContentAlignment.MiddleCenter,
-                Location = new Point(0, 40)
             };
 
             var lblHuongDan = new Label
             {
-                Text = ObtainHuongDanTheoQuyen(),
-                Font = new Font("Segoe UI", 11F),
+                Name      = "lblHuongDan",
+                Text      = ObtainHuongDanTheoQuyen(),
+                Font      = new Font("Segoe UI", 11F),
                 ForeColor = Color.FromArgb(148, 163, 184),
-                AutoSize = false,
-                Size = new Size(panelContent.Width - 80, 200),
+                AutoSize  = false,
+                Size      = new Size(620, 200),
                 TextAlign = ContentAlignment.TopCenter,
-                Location = new Point(40, 120)
             };
 
             panelContent.Controls.Add(lblWelcome);
             panelContent.Controls.Add(lblHuongDan);
+
+            // Căn giữa ngay lần đầu rồi gắn sự kiện Resize
+            CenterTrangChu();
+            panelContent.Resize += PanelContent_Resize;
+        }
+
+        // ═══════════════════════════════════════════════════════════════
+        // CĂN GIỮA ĐỘNG — dùng chung cho cả frmMain
+        // ═══════════════════════════════════════════════════════════════
+        private void PanelContent_Resize(object? sender, EventArgs e) => CenterTrangChu();
+
+        private void CenterTrangChu()
+        {
+            var lblWelcome  = panelContent.Controls["lblWelcome"]  as Label;
+            var lblHuongDan = panelContent.Controls["lblHuongDan"] as Label;
+            if (lblWelcome == null || lblHuongDan == null) return;
+
+            int w = panelContent.ClientSize.Width;
+            int h = panelContent.ClientSize.Height;
+
+            // Tổng chiều cao của cụm nội dung (gap = 16px giữa 2 label)
+            int totalH = lblWelcome.Height + 16 + lblHuongDan.Height;
+            int startY = (h - totalH) / 2;
+
+            lblWelcome.Left  = (w - lblWelcome.Width)  / 2;
+            lblWelcome.Top   = startY;
+
+            lblHuongDan.Left = (w - lblHuongDan.Width) / 2;
+            lblHuongDan.Top  = lblWelcome.Bottom + 16;
         }
 
         private string ObtainHuongDanTheoQuyen()
