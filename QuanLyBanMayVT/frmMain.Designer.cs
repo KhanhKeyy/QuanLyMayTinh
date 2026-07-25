@@ -90,6 +90,8 @@ namespace QuanLyBanMayVT
             menuNhapHang_DanhSach.Text = "Danh sách phiếu nhập";
             menuNhapHang.DropDownItems.AddRange(new ToolStripItem[]
             { menuNhapHang_LapPhieu, menuNhapHang_DanhSach });
+            menuNhapHang_LapPhieu.Click += menuNhapHang_Click;
+            menuNhapHang_DanhSach.Click += menuNhapHang_Click;
 
             // ── Đơn hàng ─────────────────────────────────────────────
             SetMenuItem(menuDonHang, "📋 Đơn hàng");
@@ -106,7 +108,8 @@ namespace QuanLyBanMayVT
             menuHoaDon_DanhSach.Text   = "Danh sách hóa đơn";
             menuHoaDon.DropDownItems.AddRange(new ToolStripItem[]
             { menuHoaDon_LapMoi, menuHoaDon_DanhSach });
-            menuHoaDon_LapMoi.Click += menuHoaDon_LapMoi_Click;
+            menuHoaDon_LapMoi.Click   += menuHoaDon_Click;
+            menuHoaDon_DanhSach.Click += menuHoaDon_Click;
 
             // ── Tồn kho ──────────────────────────────────────────────
             SetMenuItem(menuTonKho, "📊 Tồn kho");
@@ -114,6 +117,8 @@ namespace QuanLyBanMayVT
             menuTonKho_CapNhat.Text   = "Cập nhật tồn kho";
             menuTonKho.DropDownItems.AddRange(new ToolStripItem[]
             { menuTonKho_XemTonKho, menuTonKho_CapNhat });
+            menuTonKho_XemTonKho.Click += menuTonKho_Click;
+            menuTonKho_CapNhat.Click   += menuTonKho_Click;
 
             // ── Báo cáo ──────────────────────────────────────────────
             SetMenuItem(menuBaoCao, "📈 Báo cáo");
@@ -130,9 +135,11 @@ namespace QuanLyBanMayVT
             SetMenuItem(menuNhanVien, "👥 Nhân viên");
             menuNhanVien_DanhSach.Text = "Danh sách nhân viên";
             menuNhanVien.DropDownItems.Add(menuNhanVien_DanhSach);
+            menuNhanVien_DanhSach.Click += menuNhanVien_Click;
 
             // ── Cài đặt ──────────────────────────────────────────────
-            SetMenuItem(menuCaiDat, "⚙️ Cài đặt");
+            SetMenuItem(menuCaiDat, "⚙️ Danh mục SP");
+            menuCaiDat.Click += menuCaiDat_Click;
 
             // ── Đăng xuất (căn phải) ─────────────────────────────────
             SetMenuItem(menuDangXuat, "🚪 Đăng xuất");

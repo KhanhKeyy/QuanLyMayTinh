@@ -9,8 +9,7 @@ namespace QuanLyBanMayVT.DataAccess
     public class TaiKhoanDAO
     {
         /// <summary>
-        /// Xác thực đăng nhập.
-        /// Trả về đối tượng TaiKhoan nếu đúng thông tin, null nếu sai.
+        /// Xác thực đăng nhập bằng plain text.
         /// </summary>
         public TaiKhoan? XacThucDangNhap(string tenDangNhap, string matKhau)
         {
@@ -40,7 +39,7 @@ namespace QuanLyBanMayVT.DataAccess
                         TrangThai   = (bool)reader["TrangThai"]
                     };
                 }
-                return null;    // Không tìm thấy tài khoản khớp
+                return null;    // Khônng đúng tên đăng nhập hoặc mật khẩu
             }
             catch (Exception ex)
             {

@@ -211,6 +211,10 @@ namespace QuanLyBanMayVT
         private void menuHangHoa_Them_Click(object sender, EventArgs e)
             => MoFormTrong(new frmSanPham(cheBoDuyet: true));
 
+        // ── Nhập hàng ──────────────────────────────────────────────
+        private void menuNhapHang_Click(object? sender, EventArgs e)
+            => MoFormTrong(new frmNhapHang());
+
         // ── Đơn hàng ────────────────────────────────────────────────
         private void menuDonHang_XemDanhSach_Click(object sender, EventArgs e)
             => MoFormTrong(new frmDonHang());
@@ -227,8 +231,12 @@ namespace QuanLyBanMayVT
         }
 
         // ── Hóa đơn ─────────────────────────────────────────────────
-        private void menuHoaDon_LapMoi_Click(object sender, EventArgs e)
+        private void menuHoaDon_Click(object? sender, EventArgs e)
             => MoFormTrong(new frmHoaDon());
+
+        // ── Tồn kho ──────────────────────────────────────────────────
+        private void menuTonKho_Click(object? sender, EventArgs e)
+            => MoFormTrong(new frmTonKho());
 
         // ── Báo cáo ──────────────────────────────────────────────────
         private void menuBaoCao_DoanhThu_Click(object sender, EventArgs e)
@@ -239,6 +247,14 @@ namespace QuanLyBanMayVT
 
         private void menuBaoCao_BanChay_Click(object sender, EventArgs e)
             => MoFormTrong(new frmBaoCao(loaiBaoCao: "BanChay"));
+
+        // ── Nhân viên ────────────────────────────────────────────────
+        private void menuNhanVien_Click(object? sender, EventArgs e)
+            => MoFormTrong(new frmNhanVien());
+
+        // ── Cài đặt / Danh mục ───────────────────────────────────────
+        private void menuCaiDat_Click(object? sender, EventArgs e)
+            => MoFormTrong(new frmDanhMuc());
 
         // ── Đăng xuất ────────────────────────────────────────────────
         private void menuDangXuat_Click(object sender, EventArgs e)
