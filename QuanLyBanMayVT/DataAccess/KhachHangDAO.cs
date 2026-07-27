@@ -46,6 +46,42 @@ namespace QuanLyBanMayVT.DataAccess
             }
         }
 
+        /// <summary>Lấy thông tin khách hàng theo MaKhachHang</summary>
+        public KhachHang? GetById(int maKhachHang)
+        {
+            try
+            {
+                using var conn = DatabaseHelper.GetConnection();
+                const string sql = @"
+                    SELECT MaKhachHang, HoTen, Email, SoDienThoai, DiaChi, MaTaiKhoan
+                    FROM   KhachHang
+                    WHERE  MaKhachHang = @mkh";
+
+                using var cmd = new SqlCommand(sql, conn);
+                cmd.Parameters.AddWithValue("@mkh", maKhachHang);
+
+                using var reader = cmd.ExecuteReader();
+                if (reader.Read())
+                {
+                    return new KhachHang
+                    {
+                        MaKhachHang = (int)reader["MaKhachHang"],
+                        HoTen       = (string)reader["HoTen"],
+                        Email       = reader["Email"].ToString() ?? "",
+                        SoDienThoai = reader["SoDienThoai"].ToString() ?? "",
+                        DiaChi      = reader["DiaChi"].ToString() ?? "",
+                        MaTaiKhoan  = (int)reader["MaTaiKhoan"]
+                    };
+                }
+                return null;
+            }
+            catch (Exception ex)
+            {
+                MessageBox.Show($"Lỗi tải thông tin khách hàng:\n{ex.Message}", "Lỗi", MessageBoxButtons.OK, MessageBoxIcon.Error);
+                return null;
+            }
+        }
+
         /// <summary>Lấy danh sách tất cả khách hàng</summary>
         public List<KhachHang> GetAll()
         {

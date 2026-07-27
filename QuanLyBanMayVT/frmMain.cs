@@ -49,6 +49,43 @@ namespace QuanLyBanMayVT
                                 : UserSession.IsKeToan    ? Color.FromArgb(5, 150, 105)    // Xanh lá - Accountant
                                 : UserSession.IsNVBanHang ? Color.FromArgb(59, 130, 246)   // Xanh - Sales
                                 : Color.FromArgb(71, 85, 105);
+
+            CapNhatBadgeThongBao();
+        }
+
+        private Button? btnThongBao;
+
+        public void CapNhatBadgeThongBao()
+        {
+            if (UserSession.CurrentAccount == null) return;
+            int chuaDoc = new DataAccess.ThongBaoDAO().DemChuaDoc(UserSession.CurrentAccount.MaTaiKhoan);
+
+            if (btnThongBao == null)
+            {
+                btnThongBao = new Button
+                {
+                    Height = 34,
+                    AutoSize = true,
+                    Location = new Point(520, 8),
+                    BackColor = chuaDoc > 0 ? Color.FromArgb(225, 29, 72) : Color.FromArgb(51, 65, 85),
+                    ForeColor = Color.White,
+                    FlatStyle = FlatStyle.Flat,
+                    Font = new Font("Segoe UI", 9F, FontStyle.Bold),
+                    Cursor = Cursors.Hand,
+                    Padding = new Padding(12, 2, 12, 2)
+                };
+                btnThongBao.FlatAppearance.BorderSize = 0;
+                btnThongBao.Click += (s, e) =>
+                {
+                    using var dlg = new frmThongBao();
+                    dlg.ShowDialog();
+                    CapNhatBadgeThongBao();
+                };
+                panelTop.Controls.Add(btnThongBao);
+            }
+
+            btnThongBao.BackColor = chuaDoc > 0 ? Color.FromArgb(225, 29, 72) : Color.FromArgb(51, 65, 85);
+            btnThongBao.Text = chuaDoc > 0 ? $"🔔 Thông báo ({chuaDoc})" : "🔔 Thông báo";
         }
 
         // ═══════════════════════════════════════════════════════════════
@@ -232,7 +269,10 @@ namespace QuanLyBanMayVT
 
         // ── Hóa đơn ─────────────────────────────────────────────────
         private void menuHoaDon_Click(object? sender, EventArgs e)
-            => MoFormTrong(new frmHoaDon());
+            => MoFormTrong(new frmHoaDon(defaultTabIndex: 0)); // Tab Danh sách
+
+        private void menuHoaDon_LapMoi_Click(object? sender, EventArgs e)
+            => MoFormTrong(new frmHoaDon(defaultTabIndex: 1)); // Tab Lập mới
 
         // ── Tồn kho ──────────────────────────────────────────────────
         private void menuTonKho_Click(object? sender, EventArgs e)

@@ -31,15 +31,21 @@ namespace QuanLyBanMayVT
             this.ForeColor = Color.White;
             this.Font = new Font("Segoe UI", 9.5F);
 
-            var pnlTop = new FlowLayoutPanel
+            // ── TOP PANEL (TableLayoutPanel → không bao giờ bị wrap) ─────
+            var tblTop = new TableLayoutPanel
             {
                 Dock = DockStyle.Top,
-                Height = 60,
-                Padding = new Padding(12, 12, 12, 12),
+                AutoSize = true,
+                AutoSizeMode = AutoSizeMode.GrowAndShrink,
+                Padding = new Padding(12, 10, 12, 10),
                 BackColor = UIStyleHelper.BgCard,
-                WrapContents = false,
-                AutoScroll = true
+                ColumnCount = 10,   // nhiều cột → tự co giãn
+                RowCount = 1,
             };
+            tblTop.RowStyles.Add(new RowStyle(SizeType.AutoSize));
+            // Cho tất cả cột AutoSize
+            for (int i = 0; i < 10; i++)
+                tblTop.ColumnStyles.Add(new ColumnStyle(SizeType.AutoSize));
 
             var lblTT = new Label
             {
@@ -47,16 +53,22 @@ namespace QuanLyBanMayVT
                 AutoSize = true,
                 ForeColor = Color.White,
                 Font = new Font("Segoe UI", 10F, FontStyle.Bold),
+                Anchor = AnchorStyles.Left | AnchorStyles.Top,
                 Margin = new Padding(0, 6, 8, 0)
             };
-            cboTrangThai = new ComboBox { Width = 180, DropDownStyle = ComboBoxStyle.DropDownList, Margin = new Padding(0, 2, 20, 0) };
+            cboTrangThai = new ComboBox
+            {
+                Width = 170,
+                DropDownStyle = ComboBoxStyle.DropDownList,
+                Margin = new Padding(0, 3, 20, 0)
+            };
             UIStyleHelper.StyleComboBox(cboTrangThai);
             cboTrangThai.Items.AddRange(new object[] { "-- Tất cả --", "Cho xac nhan", "Da xac nhan", "Hoan tat", "Da huy" });
             cboTrangThai.SelectedIndex = 0;
             cboTrangThai.SelectedIndexChanged += (s, e) => LoadData();
 
-            pnlTop.Controls.Add(lblTT);
-            pnlTop.Controls.Add(cboTrangThai);
+            tblTop.Controls.Add(lblTT);
+            tblTop.Controls.Add(cboTrangThai);
 
             if (_cheBoDuyet || UserSession.IsNVBanHang || UserSession.IsQuanLy)
             {
@@ -64,8 +76,8 @@ namespace QuanLyBanMayVT
                 {
                     Text = "✅ Xác nhận đơn hàng",
                     AutoSize = true,
-                    Padding = new Padding(15, 6, 15, 6),
-                    Margin = new Padding(0, 0, 15, 0),
+                    Padding = new Padding(14, 6, 14, 6),
+                    Margin = new Padding(0, 0, 12, 0),
                     BackColor = UIStyleHelper.SuccessGreen,
                     ForeColor = Color.White,
                     FlatStyle = FlatStyle.Flat,
@@ -79,7 +91,7 @@ namespace QuanLyBanMayVT
                 {
                     Text = "❌ Huỷ đơn hàng",
                     AutoSize = true,
-                    Padding = new Padding(15, 6, 15, 6),
+                    Padding = new Padding(14, 6, 14, 6),
                     Margin = new Padding(0, 0, 0, 0),
                     BackColor = UIStyleHelper.DangerRed,
                     ForeColor = Color.White,
@@ -90,8 +102,8 @@ namespace QuanLyBanMayVT
                 btnHuy.FlatAppearance.BorderSize = 0;
                 btnHuy.Click += BtnHuy_Click;
 
-                pnlTop.Controls.Add(btnXacNhan);
-                pnlTop.Controls.Add(btnHuy);
+                tblTop.Controls.Add(btnXacNhan);
+                tblTop.Controls.Add(btnHuy);
             }
 
             var split = new SplitContainer
@@ -127,7 +139,7 @@ namespace QuanLyBanMayVT
             split.Panel2.Controls.Add(dgvChiTiet);
 
             this.Controls.Add(split);
-            this.Controls.Add(pnlTop);
+            this.Controls.Add(tblTop);
         }
 
         private void LoadData()
@@ -253,24 +265,30 @@ namespace QuanLyBanMayVT
 
             tabControl = new TabControl { Dock = DockStyle.Fill };
 
-            // Tab 1: Danh sách hóa đơn
+            // ── Tab 1: Danh sách hóa đơn ─────────────────────────────
             tabDanhSach = new TabPage("🧾 Danh sách hóa đơn");
             tabDanhSach.BackColor = UIStyleHelper.BgMain;
 
-            var pnlTopDS = new FlowLayoutPanel
+            var tblTopDS = new TableLayoutPanel
             {
                 Dock = DockStyle.Top,
-                Height = 60,
-                Padding = new Padding(12, 12, 12, 12),
+                AutoSize = true,
+                AutoSizeMode = AutoSizeMode.GrowAndShrink,
+                Padding = new Padding(12, 10, 12, 10),
                 BackColor = UIStyleHelper.BgCard,
-                WrapContents = false,
-                AutoScroll = true
+                ColumnCount = 5,
+                RowCount = 1,
             };
+            tblTopDS.RowStyles.Add(new RowStyle(SizeType.AutoSize));
+            for (int i = 0; i < 5; i++)
+                tblTopDS.ColumnStyles.Add(new ColumnStyle(SizeType.AutoSize));
+
             btnThanhToan = new Button
             {
-                Text = "💳 XÁC NHẬN THANH TOÁN (Hoàn tất)",
+                Text = "💳 Xác nhận thanh toán (Hoàn tất)",
                 AutoSize = true,
-                Padding = new Padding(15, 6, 15, 6),
+                Padding = new Padding(14, 6, 14, 6),
+                Margin = new Padding(0, 0, 0, 0),
                 BackColor = UIStyleHelper.SuccessGreen,
                 ForeColor = Color.White,
                 FlatStyle = FlatStyle.Flat,
@@ -279,7 +297,7 @@ namespace QuanLyBanMayVT
             };
             btnThanhToan.FlatAppearance.BorderSize = 0;
             btnThanhToan.Click += BtnThanhToan_Click;
-            pnlTopDS.Controls.Add(btnThanhToan);
+            tblTopDS.Controls.Add(btnThanhToan);
 
             dgvHoaDon = new DataGridView
             {
@@ -293,26 +311,32 @@ namespace QuanLyBanMayVT
             UIStyleHelper.StyleDataGridView(dgvHoaDon);
 
             tabDanhSach.Controls.Add(dgvHoaDon);
-            tabDanhSach.Controls.Add(pnlTopDS);
+            tabDanhSach.Controls.Add(tblTopDS);
 
-            // Tab 2: Lập hóa đơn mới từ đơn đã xác nhận
+            // ── Tab 2: Lập hóa đơn mới ───────────────────────────────
             tabLapMoi = new TabPage("➕ Lập hóa đơn mới");
             tabLapMoi.BackColor = UIStyleHelper.BgMain;
 
-            var pnlTopLM = new FlowLayoutPanel
+            var tblTopLM = new TableLayoutPanel
             {
                 Dock = DockStyle.Top,
-                Height = 60,
-                Padding = new Padding(12, 12, 12, 12),
+                AutoSize = true,
+                AutoSizeMode = AutoSizeMode.GrowAndShrink,
+                Padding = new Padding(12, 10, 12, 10),
                 BackColor = UIStyleHelper.BgCard,
-                WrapContents = false,
-                AutoScroll = true
+                ColumnCount = 5,
+                RowCount = 1,
             };
+            tblTopLM.RowStyles.Add(new RowStyle(SizeType.AutoSize));
+            for (int i = 0; i < 5; i++)
+                tblTopLM.ColumnStyles.Add(new ColumnStyle(SizeType.AutoSize));
+
             btnLapHoaDon = new Button
             {
                 Text = "🧾 Lập hóa đơn cho đơn đã chọn",
                 AutoSize = true,
-                Padding = new Padding(15, 6, 15, 6),
+                Padding = new Padding(14, 6, 14, 6),
+                Margin = new Padding(0, 0, 0, 0),
                 BackColor = UIStyleHelper.PrimaryBlue,
                 ForeColor = Color.White,
                 FlatStyle = FlatStyle.Flat,
@@ -321,7 +345,7 @@ namespace QuanLyBanMayVT
             };
             btnLapHoaDon.FlatAppearance.BorderSize = 0;
             btnLapHoaDon.Click += BtnLapHoaDon_Click;
-            pnlTopLM.Controls.Add(btnLapHoaDon);
+            tblTopLM.Controls.Add(btnLapHoaDon);
 
             dgvDonHangDaXacNhan = new DataGridView
             {
@@ -335,7 +359,7 @@ namespace QuanLyBanMayVT
             UIStyleHelper.StyleDataGridView(dgvDonHangDaXacNhan);
 
             tabLapMoi.Controls.Add(dgvDonHangDaXacNhan);
-            tabLapMoi.Controls.Add(pnlTopLM);
+            tabLapMoi.Controls.Add(tblTopLM);
 
             tabControl.TabPages.Add(tabDanhSach);
             tabControl.TabPages.Add(tabLapMoi);

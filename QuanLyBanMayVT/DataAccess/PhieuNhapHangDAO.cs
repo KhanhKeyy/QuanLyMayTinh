@@ -60,6 +60,11 @@ namespace QuanLyBanMayVT.DataAccess
                     cmdCT.ExecuteNonQuery();
                 }
                 tran.Commit();
+
+                // ── Tự động tạo thông báo ────────────────────────────
+                ThongBaoDAO.GuiThongBaoChoBanQuanLy("Phieu nhap hang",
+                    $"🚚 Phiếu nhập hàng mới #{maPN} vừa được lập và đang chờ kiểm tra.", null);
+
                 return maPN;
             }
             catch (Exception ex) { tran.Rollback(); ShowError(ex); return -1; }
@@ -118,6 +123,11 @@ namespace QuanLyBanMayVT.DataAccess
                 cmdPN.ExecuteNonQuery();
 
                 tran.Commit();
+
+                // ── Tự động tạo thông báo ────────────────────────────
+                ThongBaoDAO.GuiThongBaoChoBanQuanLy("Phieu nhap hang",
+                    $"✅ Phiếu nhập hàng #{maPhieuNhap} đã được duyệt và cập nhật số lượng vào kho!", null);
+
                 return true;
             }
             catch (Exception ex) { tran.Rollback(); ShowError(ex); return false; }

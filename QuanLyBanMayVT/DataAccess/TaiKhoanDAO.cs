@@ -1,4 +1,5 @@
 using System.Data.SqlClient;
+using QuanLyBanMayVT.Common;
 using QuanLyBanMayVT.Models;
 
 namespace QuanLyBanMayVT.DataAccess
@@ -15,6 +16,9 @@ namespace QuanLyBanMayVT.DataAccess
         {
             try
             {
+                // Hash mật khẩu trước khi so sánh với DB (DB lưu SHA-256)
+                string hashedPassword = PasswordHasher.Hash(matKhau);
+
                 using var conn = DatabaseHelper.GetConnection();
                 const string sql = @"
                     SELECT MaTaiKhoan, TenDangNhap, MatKhau, VaiTro, TrangThai
@@ -25,7 +29,7 @@ namespace QuanLyBanMayVT.DataAccess
 
                 using var cmd = new SqlCommand(sql, conn);
                 cmd.Parameters.AddWithValue("@TenDangNhap", tenDangNhap);
-                cmd.Parameters.AddWithValue("@MatKhau",     matKhau);
+                cmd.Parameters.AddWithValue("@MatKhau",     hashedPassword); // ← dùng hash
 
                 using var reader = cmd.ExecuteReader();
                 if (reader.Read())

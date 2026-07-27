@@ -79,6 +79,70 @@ namespace QuanLyBanMayVT.DataAccess
             catch { return false; }
         }
 
+        // ── THÔNG BÁO TỰ ĐỘNG (AUTOMATED NOTIFICATIONS) ───────────────────────
+
+        /// <summary>Gửi thông báo tới tài khoản khách hàng cụ thể</summary>
+        public static void GuiThongBaoChoKhachHang(int maKhachHang, string loai, string noiDung, int? maDonHang = null)
+        {
+            try
+            {
+                var kh = new KhachHangDAO().GetById(maKhachHang);
+                if (kh == null || kh.MaTaiKhoan <= 0) return;
+
+                new ThongBaoDAO().Insert(new ThongBao
+                {
+                    LoaiThongBao   = loai,
+                    NoiDung        = noiDung,
+                    MaTaiKhoanNhan = kh.MaTaiKhoan,
+                    MaDonHang      = maDonHang
+                });
+            }
+            catch { }
+        }
+
+        /// <summary>Gửi thông báo tới Ban quản lý & Nhân viên kho/bán hàng</summary>
+        public static void GuiThongBaoChoBanQuanLy(string loai, string noiDung, int? maSanPham = null)
+        {
+            try
+            {
+                using var conn = DatabaseHelper.GetConnection();
+                using var cmd = new SqlCommand("SELECT MaTaiKhoan FROM TaiKhoan WHERE VaiTro IN ('QuanLy', 'KeToan', 'NhanVienBanHang')", conn);
+                using var r = cmd.ExecuteReader();
+                var listTK = new List<int>();
+                while (r.Read()) listTK.Add((int)r["MaTaiKhoan"]);
+                r.Close();
+
+                var dao = new ThongBaoDAO();
+                foreach (int tk in listTK)
+                {
+                    dao.Insert(new ThongBao
+                    {
+                        LoaiThongBao   = loai,
+                        NoiDung        = noiDung,
+                        MaTaiKhoanNhan = tk,
+                        MaSanPham      = maSanPham
+                    });
+                }
+            }
+            catch { }
+        }
+
+        /// <summary>Tự động quét sản phẩm có tồn kho dưới mức tối thiểu và gửi cảnh báo</summary>
+        public static void KiemTraTietTonKhoThapVaGuiThongBao()
+        {
+            try
+            {
+                var spList = new SanPhamDAO().GetAll();
+                var thapList = spList.Where(p => p.DuoiMucToiThieu).ToList();
+                foreach (var sp in thapList)
+                {
+                    string nd = $"⚠️ Tồn kho thấp: Sản phẩm '{sp.TenSanPham}' chỉ còn {sp.SoLuongTon} cái (Mức tối thiểu: {sp.MucTonToiThieu})! Vui lòng lập phiếu nhập hàng.";
+                    GuiThongBaoChoBanQuanLy("Ton kho thap", nd, sp.MaSanPham);
+                }
+            }
+            catch { }
+        }
+
         private static void ShowError(Exception ex) =>
             MessageBox.Show($"Lỗi CSDL:\n{ex.Message}", "Lỗi",
                 MessageBoxButtons.OK, MessageBoxIcon.Error);

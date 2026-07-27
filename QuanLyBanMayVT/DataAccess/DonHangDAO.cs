@@ -114,6 +114,16 @@ namespace QuanLyBanMayVT.DataAccess
                     cmdCT.ExecuteNonQuery();
                 }
                 tran.Commit();
+
+                // ── Tự động tạo thông báo ────────────────────────────
+                ThongBaoDAO.GuiThongBaoChoKhachHang(dh.MaKhachHang, "Ket qua don hang",
+                    $"📦 Đơn hàng #{maDH} của bạn đã được tiếp nhận thành công và đang chờ xác nhận.", maDH);
+
+                ThongBaoDAO.GuiThongBaoChoBanQuanLy("Ket qua don hang",
+                    $"📦 Đơn hàng mới #{maDH} vừa được tạo! Vui lòng xác nhận.", maDH);
+
+                ThongBaoDAO.KiemTraTietTonKhoThapVaGuiThongBao();
+
                 return maDH;
             }
             catch (Exception ex)
@@ -137,7 +147,18 @@ namespace QuanLyBanMayVT.DataAccess
                     WHERE MaDonHang = @id AND TrangThaiDonHang = 'Cho xac nhan'", conn);
                 cmd.Parameters.AddWithValue("@mnv", maNhanVien);
                 cmd.Parameters.AddWithValue("@id",  maDonHang);
-                return cmd.ExecuteNonQuery() > 0;
+                bool ok = cmd.ExecuteNonQuery() > 0;
+
+                if (ok)
+                {
+                    var dh = GetById(maDonHang);
+                    if (dh != null)
+                    {
+                        ThongBaoDAO.GuiThongBaoChoKhachHang(dh.MaKhachHang, "Ket qua don hang",
+                            $"✅ Đơn hàng #{maDonHang} của bạn đã được nhân viên bán hàng xác nhận thành công!", maDonHang);
+                    }
+                }
+                return ok;
             }
             catch (Exception ex) { ShowError(ex); return false; }
         }
@@ -152,7 +173,18 @@ namespace QuanLyBanMayVT.DataAccess
                     UPDATE DonHang SET TrangThaiDonHang = 'Da huy'
                     WHERE MaDonHang = @id AND TrangThaiDonHang = 'Cho xac nhan'", conn);
                 cmd.Parameters.AddWithValue("@id", maDonHang);
-                return cmd.ExecuteNonQuery() > 0;
+                bool ok = cmd.ExecuteNonQuery() > 0;
+
+                if (ok)
+                {
+                    var dh = GetById(maDonHang);
+                    if (dh != null)
+                    {
+                        ThongBaoDAO.GuiThongBaoChoKhachHang(dh.MaKhachHang, "Ket qua don hang",
+                            $"❌ Đơn hàng #{maDonHang} của bạn đã bị hủy.", maDonHang);
+                    }
+                }
+                return ok;
             }
             catch (Exception ex) { ShowError(ex); return false; }
         }

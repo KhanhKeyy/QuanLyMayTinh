@@ -25,6 +25,7 @@ namespace QuanLyBanMayVT
         private DataGridView dgvPhieuNhap = null!;
         private DataGridView dgvChiTietPN = null!;
         private Button btnDuyetPhieu = null!;
+        private ComboBox _cboFilterPhieu = null!;
 
         public frmNhapHang()
         {
@@ -46,29 +47,48 @@ namespace QuanLyBanMayVT
             tabLapPhieu = new TabPage("🚚 Lập phiếu nhập hàng");
             tabLapPhieu.BackColor = UIStyleHelper.BgMain;
 
-            var pnlTopLP = new Panel { Dock = DockStyle.Top, Height = 105, Padding = new Padding(12), BackColor = UIStyleHelper.BgCard };
+            // ── Top: chọn sản phẩm + số lượng + đơn giá ──────────────
+            var tblTopLP = new TableLayoutPanel
+            {
+                Dock = DockStyle.Top,
+                AutoSize = true,
+                AutoSizeMode = AutoSizeMode.GrowAndShrink,
+                Padding = new Padding(12, 10, 12, 10),
+                BackColor = UIStyleHelper.BgCard,
+                ColumnCount = 8,
+                RowCount = 2,
+            };
+            tblTopLP.RowStyles.Add(new RowStyle(SizeType.AutoSize));
+            tblTopLP.RowStyles.Add(new RowStyle(SizeType.AutoSize));
+            for (int i = 0; i < 8; i++)
+                tblTopLP.ColumnStyles.Add(new ColumnStyle(SizeType.AutoSize));
 
-            pnlTopLP.Controls.Add(new Label { Text = "Sản phẩm:", Location = new Point(12, 16), AutoSize = true, ForeColor = UIStyleHelper.TextMuted });
-            cboSanPham = new ComboBox { Location = new Point(110, 12), Width = 260, DropDownStyle = ComboBoxStyle.DropDownList };
+            // Row 0: Sản phẩm + Số lượng
+            var lblSP = new Label { Text = "Sản phẩm:", AutoSize = true, ForeColor = UIStyleHelper.TextMuted, Margin = new Padding(0, 6, 8, 0) };
+            cboSanPham = new ComboBox { Width = 260, DropDownStyle = ComboBoxStyle.DropDownList, Margin = new Padding(0, 3, 20, 0) };
             UIStyleHelper.StyleComboBox(cboSanPham);
             cboSanPham.SelectedIndexChanged += CboSanPham_SelectedIndexChanged;
-            pnlTopLP.Controls.Add(cboSanPham);
 
-            pnlTopLP.Controls.Add(new Label { Text = "Số lượng nhập:", Location = new Point(395, 16), AutoSize = true, ForeColor = UIStyleHelper.TextMuted });
-            numSoLuong = new NumericUpDown { Location = new Point(515, 12), Width = 110, Minimum = 1, Maximum = 10000, Value = 10 };
+            var lblSL = new Label { Text = "Số lượng nhập:", AutoSize = true, ForeColor = UIStyleHelper.TextMuted, Margin = new Padding(0, 6, 8, 0) };
+            numSoLuong = new NumericUpDown { Width = 110, Minimum = 1, Maximum = 10000, Value = 10, Margin = new Padding(0, 3, 0, 0) };
             UIStyleHelper.StyleNumeric(numSoLuong);
-            pnlTopLP.Controls.Add(numSoLuong);
 
-            pnlTopLP.Controls.Add(new Label { Text = "Đơn giá nhập:", Location = new Point(12, 60), AutoSize = true, ForeColor = UIStyleHelper.TextMuted });
-            numDonGia = new NumericUpDown { Location = new Point(110, 56), Width = 180, Maximum = 1000000000, Increment = 100000 };
+            tblTopLP.Controls.Add(lblSP,     0, 0);
+            tblTopLP.Controls.Add(cboSanPham, 1, 0);
+            tblTopLP.Controls.Add(lblSL,      2, 0);
+            tblTopLP.Controls.Add(numSoLuong, 3, 0);
+
+            // Row 1: Đơn giá + nút Thêm
+            var lblDG = new Label { Text = "Đơn giá nhập:", AutoSize = true, ForeColor = UIStyleHelper.TextMuted, Margin = new Padding(0, 6, 8, 4) };
+            numDonGia = new NumericUpDown { Width = 180, Maximum = 1_000_000_000, Increment = 100000, Margin = new Padding(0, 3, 20, 4) };
             UIStyleHelper.StyleNumeric(numDonGia);
-            pnlTopLP.Controls.Add(numDonGia);
 
             btnThemVaoPhieu = new Button
             {
                 Text = "➕ Thêm vào danh sách nhập",
-                Location = new Point(315, 54),
-                Size = new Size(230, 35),
+                AutoSize = true,
+                Padding = new Padding(14, 6, 14, 6),
+                Margin = new Padding(0, 0, 0, 4),
                 BackColor = UIStyleHelper.PrimaryBlue,
                 ForeColor = Color.White,
                 FlatStyle = FlatStyle.Flat,
@@ -77,8 +97,13 @@ namespace QuanLyBanMayVT
             };
             btnThemVaoPhieu.FlatAppearance.BorderSize = 0;
             btnThemVaoPhieu.Click += BtnThemVaoPhieu_Click;
-            pnlTopLP.Controls.Add(btnThemVaoPhieu);
 
+            tblTopLP.Controls.Add(lblDG,          0, 1);
+            tblTopLP.Controls.Add(numDonGia,       1, 1);
+            tblTopLP.Controls.Add(btnThemVaoPhieu, 2, 1);
+            tblTopLP.SetColumnSpan(btnThemVaoPhieu, 2);
+
+            // ── Grid tạm + Bottom ────────────────────────────────────
             dgvChiTietTam = new DataGridView
             {
                 Dock = DockStyle.Fill,
@@ -89,20 +114,36 @@ namespace QuanLyBanMayVT
             };
             UIStyleHelper.StyleDataGridView(dgvChiTietTam);
 
-            var pnlBottomLP = new Panel { Dock = DockStyle.Bottom, Height = 55, Padding = new Padding(12), BackColor = UIStyleHelper.BgCard };
+            var tblBottom = new TableLayoutPanel
+            {
+                Dock = DockStyle.Bottom,
+                AutoSize = true,
+                AutoSizeMode = AutoSizeMode.GrowAndShrink,
+                Padding = new Padding(12, 10, 12, 10),
+                BackColor = UIStyleHelper.BgCard,
+                ColumnCount = 3,
+                RowCount = 1,
+            };
+            tblBottom.RowStyles.Add(new RowStyle(SizeType.AutoSize));
+            tblBottom.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 100F));
+            tblBottom.ColumnStyles.Add(new ColumnStyle(SizeType.AutoSize));
+            tblBottom.ColumnStyles.Add(new ColumnStyle(SizeType.AutoSize));
+
             lblTongGiaTri = new Label
             {
                 Text = "Tổng giá trị phiếu nhập: 0 đ",
-                Location = new Point(12, 16),
                 AutoSize = true,
                 Font = new Font("Segoe UI", 11F, FontStyle.Bold),
-                ForeColor = Color.FromArgb(52, 211, 153)
+                ForeColor = Color.FromArgb(52, 211, 153),
+                Margin = new Padding(0, 6, 0, 0),
+                Dock = DockStyle.Fill
             };
             btnLapPhieu = new Button
             {
                 Text = "✅ Hoàn tất lập phiếu nhập",
-                Location = new Point(480, 10),
-                Size = new Size(230, 35),
+                AutoSize = true,
+                Padding = new Padding(14, 6, 14, 6),
+                Margin = new Padding(0, 0, 0, 0),
                 BackColor = UIStyleHelper.SuccessGreen,
                 ForeColor = Color.White,
                 FlatStyle = FlatStyle.Flat,
@@ -112,23 +153,57 @@ namespace QuanLyBanMayVT
             btnLapPhieu.FlatAppearance.BorderSize = 0;
             btnLapPhieu.Click += BtnLapPhieu_Click;
 
-            pnlBottomLP.Controls.Add(lblTongGiaTri);
-            pnlBottomLP.Controls.Add(btnLapPhieu);
+            tblBottom.Controls.Add(lblTongGiaTri, 0, 0);
+            tblBottom.Controls.Add(btnLapPhieu,   2, 0);
 
             tabLapPhieu.Controls.Add(dgvChiTietTam);
-            tabLapPhieu.Controls.Add(pnlTopLP);
-            tabLapPhieu.Controls.Add(pnlBottomLP);
+            tabLapPhieu.Controls.Add(tblTopLP);
+            tabLapPhieu.Controls.Add(tblBottom);
 
             // Tab 2: Danh sách phiếu nhập
             tabDanhSach = new TabPage("📋 Danh sách phiếu nhập");
             tabDanhSach.BackColor = UIStyleHelper.BgMain;
 
-            var pnlTopDS = new Panel { Dock = DockStyle.Top, Height = 55, Padding = new Padding(12), BackColor = UIStyleHelper.BgCard };
+            var tblTopDS = new TableLayoutPanel
+            {
+                Dock = DockStyle.Top,
+                AutoSize = true,
+                AutoSizeMode = AutoSizeMode.GrowAndShrink,
+                Padding = new Padding(12, 10, 12, 10),
+                BackColor = UIStyleHelper.BgCard,
+                ColumnCount = 10,
+                RowCount = 1,
+            };
+            tblTopDS.RowStyles.Add(new RowStyle(SizeType.AutoSize));
+            for (int i = 0; i < 10; i++)
+                tblTopDS.ColumnStyles.Add(new ColumnStyle(SizeType.AutoSize));
+
+            // ── Filter trạng thái phiếu nhập ────────────────────────
+            var lblFilter = new Label
+            {
+                Text = "Lọc trạng thái:",
+                AutoSize = true,
+                ForeColor = Color.White,
+                Font = new Font("Segoe UI", 10F, FontStyle.Bold),
+                Margin = new Padding(0, 6, 8, 0)
+            };
+            _cboFilterPhieu = new ComboBox
+            {
+                Width = 170,
+                DropDownStyle = ComboBoxStyle.DropDownList,
+                Margin = new Padding(0, 3, 20, 0)
+            };
+            UIStyleHelper.StyleComboBox(_cboFilterPhieu);
+            _cboFilterPhieu.Items.AddRange(new object[] { "-- Tất cả --", "⏳ Chờ kiểm tra", "✅ Đã nhập kho" });
+            _cboFilterPhieu.SelectedIndex = 0;
+            _cboFilterPhieu.SelectedIndexChanged += (s, e) => LoadPhieuNhap();
+
             btnDuyetPhieu = new Button
             {
-                Text = "✅ DUYỆT PHIẾU (Nhập kho)",
-                Location = new Point(12, 10),
-                Size = new Size(230, 35),
+                Text = "✅ Duyệt phiếu (Nhập kho)",
+                AutoSize = true,
+                Padding = new Padding(14, 6, 14, 6),
+                Margin = new Padding(0, 0, 0, 0),
                 BackColor = UIStyleHelper.SuccessGreen,
                 ForeColor = Color.White,
                 FlatStyle = FlatStyle.Flat,
@@ -137,7 +212,10 @@ namespace QuanLyBanMayVT
             };
             btnDuyetPhieu.FlatAppearance.BorderSize = 0;
             btnDuyetPhieu.Click += BtnDuyetPhieu_Click;
-            pnlTopDS.Controls.Add(btnDuyetPhieu);
+
+            tblTopDS.Controls.Add(lblFilter);
+            tblTopDS.Controls.Add(_cboFilterPhieu);
+            tblTopDS.Controls.Add(btnDuyetPhieu);
 
             var splitDS = new SplitContainer
             {
@@ -172,7 +250,7 @@ namespace QuanLyBanMayVT
             splitDS.Panel2.Controls.Add(dgvChiTietPN);
 
             tabDanhSach.Controls.Add(splitDS);
-            tabDanhSach.Controls.Add(pnlTopDS);
+            tabDanhSach.Controls.Add(tblTopDS);
 
             tabControl.TabPages.Add(tabLapPhieu);
             tabControl.TabPages.Add(tabDanhSach);
@@ -273,6 +351,14 @@ namespace QuanLyBanMayVT
         private void LoadPhieuNhap()
         {
             var list = new PhieuNhapHangDAO().GetAll();
+
+            // Lọc theo trạng thái nếu có chọn
+            string filterText = _cboFilterPhieu?.SelectedItem?.ToString() ?? "-- Tất cả --";
+            if (filterText == "⏳ Chờ kiểm tra")
+                list = list.Where(p => p.TrangThai == "Cho kiem tra").ToList();
+            else if (filterText == "✅ Đã nhập kho")
+                list = list.Where(p => p.TrangThai == "Da nhap kho").ToList();
+
             dgvPhieuNhap.DataSource = list.Select(p => new
             {
                 p.MaPhieuNhap,
