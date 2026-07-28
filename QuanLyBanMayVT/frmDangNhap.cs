@@ -175,12 +175,12 @@ namespace QuanLyBanMayVT
         // ═══════════════════════════════════════════════════════════════
         private void btnDangNhap_MouseEnter(object sender, EventArgs e)
         {
-            btnDangNhap.BackColor = Color.FromArgb(37, 99, 235);
+            btnDangNhap.BackColor = Color.FromArgb(31, 41, 55);
         }
 
         private void btnDangNhap_MouseLeave(object sender, EventArgs e)
         {
-            btnDangNhap.BackColor = Color.FromArgb(59, 130, 246);
+            btnDangNhap.BackColor = Color.FromArgb(17, 24, 39);
         }
 
         // ═══════════════════════════════════════════════════════════════
@@ -192,8 +192,8 @@ namespace QuanLyBanMayVT
             var g = e.Graphics;
             g.SmoothingMode = System.Drawing.Drawing2D.SmoothingMode.AntiAlias;
 
-            // Đường viền gradient nhẹ
-            using var pen = new Pen(Color.FromArgb(60, 99, 179, 237), 1.5f);
+            // Viền xám nhẹ cho card trắng
+            using var pen = new Pen(Color.FromArgb(209, 213, 219), 1f);
             g.DrawRectangle(pen, 0, 0, panel.Width - 1, panel.Height - 1);
         }
     }

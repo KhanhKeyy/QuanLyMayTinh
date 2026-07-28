@@ -26,7 +26,7 @@ namespace QuanLyBanMayVT
         {
             this.Text = "Quản lý danh mục sản phẩm";
             this.BackColor = UIStyleHelper.BgMain;
-            this.ForeColor = Color.White;
+            this.ForeColor = UIStyleHelper.TextDark;
             this.Font = new Font("Segoe UI", 9.5F);
 
             dgvDanhMuc = new DataGridView
@@ -48,27 +48,29 @@ namespace QuanLyBanMayVT
                 Padding = new Padding(15),
                 BackColor = UIStyleHelper.BgCard
             };
+            // Labels inside input panel should use dark text
+            var labelStyle = new Action<Label>(lbl => { lbl.ForeColor = UIStyleHelper.TextMuted; });
 
-            pnlInput.Controls.Add(new Label { Text = "Tên danh mục:", Location = new Point(15, 20), AutoSize = true, ForeColor = UIStyleHelper.TextMuted });
-            txtTenDanhMuc = new TextBox { Location = new Point(130, 17), Width = 300 };
+            pnlInput.Controls.Add(new Label { Text = "Tên danh mục:", Location = new Point(15, 22), AutoSize = true, ForeColor = UIStyleHelper.TextMuted });
+            txtTenDanhMuc = new TextBox { Location = new Point(170, 17), Width = 300 };
             UIStyleHelper.StyleTextBox(txtTenDanhMuc);
             pnlInput.Controls.Add(txtTenDanhMuc);
 
-            pnlInput.Controls.Add(new Label { Text = "Mô tả:", Location = new Point(15, 65), AutoSize = true, ForeColor = UIStyleHelper.TextMuted });
-            txtMoTa = new TextBox { Location = new Point(130, 62), Width = 300, Multiline = true, Height = 65 };
+            pnlInput.Controls.Add(new Label { Text = "Mô tả:", Location = new Point(15, 67), AutoSize = true, ForeColor = UIStyleHelper.TextMuted });
+            txtMoTa = new TextBox { Location = new Point(170, 62), Width = 300, Multiline = true, Height = 65 };
             UIStyleHelper.StyleTextBox(txtMoTa);
             pnlInput.Controls.Add(txtMoTa);
 
-            btnThem = CreateBtn("Thêm mới", UIStyleHelper.PrimaryBlue, 460, 17);
+            btnThem = CreateBtn("Thêm mới", UIStyleHelper.PrimaryBlue, 500, 17);
             btnThem.Click += BtnThem_Click;
 
-            btnSua = CreateBtn("Cập nhật", UIStyleHelper.SuccessGreen, 460, 62);
+            btnSua = CreateBtn("Cập nhật", UIStyleHelper.SuccessGreen, 500, 62);
             btnSua.Click += BtnSua_Click;
 
-            btnXoa = CreateBtn("Xóa", UIStyleHelper.DangerRed, 595, 17);
+            btnXoa = CreateBtn("Xóa", UIStyleHelper.DangerRed, 635, 17);
             btnXoa.Click += BtnXoa_Click;
 
-            btnLamMoi = CreateBtn("Làm mới", Color.FromArgb(100, 116, 139), 595, 62);
+            btnLamMoi = CreateBtn("Làm mới", Color.FromArgb(100, 116, 139), 635, 62);
             btnLamMoi.Click += (s, e) => ClearForm();
 
             pnlInput.Controls.Add(btnThem);
