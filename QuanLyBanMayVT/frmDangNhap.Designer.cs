@@ -18,6 +18,7 @@ namespace QuanLyBanMayVT
             lblTitle          = new Label();
             lblSubtitle       = new Label();
             lblTenDangNhap    = new Label();
+            panelTenDangNhap  = new Panel();
             txtTenDangNhap    = new TextBox();
             lblMatKhau        = new Label();
             panelPassword     = new Panel();
@@ -29,23 +30,25 @@ namespace QuanLyBanMayVT
 
             panelBackground.SuspendLayout();
             panelCard.SuspendLayout();
+            panelTenDangNhap.SuspendLayout();
             panelPassword.SuspendLayout();
             SuspendLayout();
 
-            // ── panelBackground — white/light ────────────────────────────
-            panelBackground.BackColor = Color.FromArgb(243, 244, 246);   // #F3F4F6
+            // ── panelBackground — vẽ viền ngoài card ────────────────────
+            panelBackground.BackColor = Color.FromArgb(243, 244, 246);
             panelBackground.Controls.Add(panelCard);
             panelBackground.Dock      = DockStyle.Fill;
             panelBackground.Location  = new Point(0, 0);
             panelBackground.Name      = "panelBackground";
             panelBackground.Size      = new Size(800, 520);
+            panelBackground.Paint    += PanelBackground_PaintCardBorder;
 
             // ── panelCard — white card, centred ───────────────────────────
             panelCard.BackColor = Color.White;
             panelCard.Controls.Add(lblTitle);
             panelCard.Controls.Add(lblSubtitle);
             panelCard.Controls.Add(lblTenDangNhap);
-            panelCard.Controls.Add(txtTenDangNhap);
+            panelCard.Controls.Add(panelTenDangNhap);
             panelCard.Controls.Add(lblMatKhau);
             panelCard.Controls.Add(panelPassword);
             panelCard.Controls.Add(btnDangNhap);
@@ -54,7 +57,6 @@ namespace QuanLyBanMayVT
             panelCard.Location = new Point(200, 10);
             panelCard.Name     = "panelCard";
             panelCard.Size     = new Size(400, 500);
-            panelCard.Paint   += PanelCard_Paint;
 
             // ── lblTitle ─────────────────────────────────────────────────
             lblTitle.Font      = new Font("Segoe UI", 18F, FontStyle.Bold);
@@ -82,15 +84,22 @@ namespace QuanLyBanMayVT
             lblTenDangNhap.Size      = new Size(140, 22);
             lblTenDangNhap.Text      = "Tên đăng nhập";
 
-            // ── txtTenDangNhap — light gray bg + visible border ───────────
-            txtTenDangNhap.BackColor      = Color.FromArgb(249, 250, 251);
-            txtTenDangNhap.BorderStyle    = BorderStyle.FixedSingle;
-            txtTenDangNhap.Font           = new Font("Segoe UI", 11F);
-            txtTenDangNhap.ForeColor      = Color.FromArgb(17, 24, 39);
-            txtTenDangNhap.Location       = new Point(40, 162);
-            txtTenDangNhap.Name           = "txtTenDangNhap";
+            // ── panelTenDangNhap — bọc TextBox để viền giống panelPassword ─
+            panelTenDangNhap.BackColor = Color.FromArgb(249, 250, 251);
+            panelTenDangNhap.Controls.Add(txtTenDangNhap);
+            panelTenDangNhap.Location  = new Point(40, 162);
+            panelTenDangNhap.Name      = "panelTenDangNhap";
+            panelTenDangNhap.Size      = new Size(320, 36);
+            panelTenDangNhap.Paint    += PanelInput_Paint;
+
+            // ── txtTenDangNhap — không có viền riêng, viền do panel vẽ ──────
+            txtTenDangNhap.BackColor       = Color.FromArgb(249, 250, 251);
+            txtTenDangNhap.BorderStyle     = BorderStyle.None;
+            txtTenDangNhap.Dock            = DockStyle.Fill;
+            txtTenDangNhap.Font            = new Font("Segoe UI", 11F);
+            txtTenDangNhap.ForeColor       = Color.FromArgb(17, 24, 39);
+            txtTenDangNhap.Name            = "txtTenDangNhap";
             txtTenDangNhap.PlaceholderText = "Nhập tên đăng nhập...";
-            txtTenDangNhap.Size           = new Size(320, 27);
 
             // ── lblMatKhau ────────────────────────────────────────────────
             lblMatKhau.Font      = new Font("Segoe UI", 9.5F, FontStyle.Bold);
@@ -100,14 +109,14 @@ namespace QuanLyBanMayVT
             lblMatKhau.Size      = new Size(100, 22);
             lblMatKhau.Text      = "Mật khẩu";
 
-            // ── panelPassword — same light style with visible border ───────
+            // ── panelPassword — viền giống panelTenDangNhap ──────────────
             panelPassword.BackColor  = Color.FromArgb(249, 250, 251);
             panelPassword.Controls.Add(txtMatKhau);
             panelPassword.Controls.Add(btnTogglePassword);
             panelPassword.Location   = new Point(40, 242);
             panelPassword.Name       = "panelPassword";
             panelPassword.Size       = new Size(320, 36);
-            panelPassword.Paint     += PanelPassword_Paint;  // draw border manually
+            panelPassword.Paint     += PanelInput_Paint;
 
             // ── txtMatKhau ────────────────────────────────────────────────
             txtMatKhau.BackColor       = Color.FromArgb(249, 250, 251);
@@ -169,12 +178,12 @@ namespace QuanLyBanMayVT
             lblFooter.Location  = new Point(0, 455);
             lblFooter.Name      = "lblFooter";
             lblFooter.Size      = new Size(400, 30);
-            lblFooter.Text      = "© 2025 QuanLyBanMayVT - Hệ thống quản lý cửa hàng";
+            lblFooter.Text      = "© 2026 QuanLyBanMayVT - Hệ thống quản lý cửa hàng";
             lblFooter.TextAlign = ContentAlignment.MiddleCenter;
 
             // ── frmDangNhap ───────────────────────────────────────────────
-            AutoScaleDimensions = new SizeF(7F, 15F);
-            AutoScaleMode       = AutoScaleMode.Font;
+            AutoScaleDimensions = new SizeF(96F, 96F);
+            AutoScaleMode       = AutoScaleMode.Dpi;
             BackColor           = Color.FromArgb(243, 244, 246);
             ClientSize          = new Size(800, 520);
             Controls.Add(panelBackground);
@@ -188,16 +197,31 @@ namespace QuanLyBanMayVT
             panelBackground.ResumeLayout(false);
             panelCard.ResumeLayout(false);
             panelCard.PerformLayout();
+            panelTenDangNhap.ResumeLayout(false);
+            panelTenDangNhap.PerformLayout();
             panelPassword.ResumeLayout(false);
             panelPassword.PerformLayout();
             ResumeLayout(false);
         }
 
-        // Draw 1px gray border around password panel to match TextBox look
-        private void PanelPassword_Paint(object sender, PaintEventArgs e)
+        // Vẽ viền 1px xám nhạt đồng nhất cho cả 2 panel input
+        private void PanelInput_Paint(object sender, PaintEventArgs e)
         {
             if (sender is Panel p)
-                e.Graphics.DrawRectangle(new Pen(Color.FromArgb(180, 190, 200), 1), 0, 0, p.Width - 1, p.Height - 1);
+            {
+                using var pen = new Pen(Color.FromArgb(209, 213, 219), 1);
+                e.Graphics.DrawRectangle(pen, 0, 0, p.Width - 1, p.Height - 1);
+            }
+        }
+
+        // Vẽ viền ngoài cho panelCard từ panelBackground (không bị che bởi control con)
+        private void PanelBackground_PaintCardBorder(object sender, PaintEventArgs e)
+        {
+            var card = panelCard;
+            if (card == null) return;
+            var r = new System.Drawing.Rectangle(card.Left - 1, card.Top - 1, card.Width + 1, card.Height + 1);
+            using var pen = new Pen(Color.FromArgb(209, 213, 219), 1);
+            e.Graphics.DrawRectangle(pen, r);
         }
 
         #endregion
@@ -208,6 +232,7 @@ namespace QuanLyBanMayVT
         private Label lblTitle;
         private Label lblSubtitle;
         private Label lblTenDangNhap;
+        private Panel panelTenDangNhap;
         private TextBox txtTenDangNhap;
         private Label lblMatKhau;
         private Panel panelPassword;

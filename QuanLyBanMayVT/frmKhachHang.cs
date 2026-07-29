@@ -24,7 +24,15 @@ namespace QuanLyBanMayVT
 
         // ── Tab Đơn Hàng ────────────────────────────────────────────
         private DataGridView dgvDonHang = null!;
-        private DataGridView dgvChiTietDH = null!;
+        private int _currentOrderPage = 1;
+        private const int OrderPageSize = 10;
+        private List<DonHang> _fullCustomerOrderList = new();
+
+        private Panel pnlOrderPagination = null!;
+        private Label lblOrderPageInfo = null!;
+        private Button btnOrderPrev = null!;
+        private Button btnOrderNext = null!;
+        private FlowLayoutPanel pnlOrderPageNumbers = null!;
 
         // ── Tab Build PC ─────────────────────────────────────────────
         private ComboBox cboCPU = null!, cboRAM = null!, cboGPU = null!;
@@ -104,17 +112,18 @@ namespace QuanLyBanMayVT
             {
                 btnThongBao = new Button
                 {
-                    Height = 36,
+                    Height = 34,
                     AutoSize = true,
-                    Top = 12,
-                    BackColor = chuaDoc > 0 ? Color.FromArgb(225, 29, 72) : Color.FromArgb(51, 65, 85),
-                    ForeColor = Color.White,
+                    Top = 10,
+                    BackColor = chuaDoc > 0 ? Color.FromArgb(254, 242, 242) : Color.FromArgb(248, 250, 252),
+                    ForeColor = chuaDoc > 0 ? Color.FromArgb(220, 38, 38) : Color.FromArgb(55, 65, 81),
                     FlatStyle = FlatStyle.Flat,
                     Font = new Font("Segoe UI", 9F, FontStyle.Bold),
                     Cursor = Cursors.Hand,
                     Padding = new Padding(12, 2, 12, 2)
                 };
-                btnThongBao.FlatAppearance.BorderSize = 0;
+                btnThongBao.FlatAppearance.BorderColor = chuaDoc > 0 ? Color.FromArgb(252, 165, 165) : Color.FromArgb(209, 213, 219);
+                btnThongBao.FlatAppearance.BorderSize = 1;
                 btnThongBao.Click += (s, e) =>
                 {
                     using var dlg = new frmThongBao();
@@ -124,7 +133,9 @@ namespace QuanLyBanMayVT
                 panelTop.Controls.Add(btnThongBao);
             }
 
-            btnThongBao.BackColor = chuaDoc > 0 ? Color.FromArgb(225, 29, 72) : Color.FromArgb(51, 65, 85);
+            btnThongBao.BackColor = chuaDoc > 0 ? Color.FromArgb(254, 242, 242) : Color.FromArgb(248, 250, 252);
+            btnThongBao.ForeColor = chuaDoc > 0 ? Color.FromArgb(220, 38, 38) : Color.FromArgb(55, 65, 81);
+            btnThongBao.FlatAppearance.BorderColor = chuaDoc > 0 ? Color.FromArgb(252, 165, 165) : Color.FromArgb(209, 213, 219);
             btnThongBao.Text = chuaDoc > 0 ? $"🔔 Thông báo ({chuaDoc})" : "🔔 Thông báo";
             PanelTop_Resize(panelTop, EventArgs.Empty);
         }
@@ -212,7 +223,7 @@ namespace QuanLyBanMayVT
             {
                 Dock = DockStyle.Top,
                 Height = 115,
-                BackColor = Color.FromArgb(15, 23, 42),
+                BackColor = Color.FromArgb(248, 250, 252),
                 Padding = new Padding(14, 10, 14, 10)
             };
             var flowCats = new FlowLayoutPanel
@@ -240,7 +251,7 @@ namespace QuanLyBanMayVT
                 AutoSize = true,
                 AutoSizeMode = AutoSizeMode.GrowAndShrink,
                 Visible = false, // Mặc định ẩn
-                BackColor = Color.FromArgb(30, 41, 59),
+                BackColor = Color.FromArgb(241, 245, 249),
                 Padding = new Padding(14, 8, 14, 8),
                 WrapContents = true
             };
@@ -255,13 +266,14 @@ namespace QuanLyBanMayVT
                     AutoSize = true,
                     Padding = new Padding(12, 4, 12, 4),
                     Margin = new Padding(0, 0, 8, 4),
-                    BackColor = Color.FromArgb(51, 65, 85),
-                    ForeColor = Color.White,
+                    BackColor = Color.White,
+                    ForeColor = Color.FromArgb(51, 65, 85),
                     FlatStyle = FlatStyle.Flat,
                     Font = new Font("Segoe UI", 9F, FontStyle.Bold),
                     Cursor = Cursors.Hand
                 };
-                btnSub.FlatAppearance.BorderSize = 0;
+                btnSub.FlatAppearance.BorderColor = Color.FromArgb(203, 213, 225);
+                btnSub.FlatAppearance.BorderSize = 1;
                 btnSub.Click += (s, e) => SelectSubLinhKien(capturedSubKey, btnSub);
                 pnlSubLinhKien.Controls.Add(btnSub);
 
@@ -349,11 +361,15 @@ namespace QuanLyBanMayVT
         {
             if (_selectedSubBtn != null)
             {
-                _selectedSubBtn.BackColor = Color.FromArgb(51, 65, 85);
+                _selectedSubBtn.BackColor = Color.White;
+                _selectedSubBtn.ForeColor = Color.FromArgb(51, 65, 85);
+                _selectedSubBtn.FlatAppearance.BorderColor = Color.FromArgb(203, 213, 225);
             }
             _subComponentKey = subKey;
             _selectedSubBtn = btnSub;
             btnSub.BackColor = UIStyleHelper.PrimaryBlue;
+            btnSub.ForeColor = Color.White;
+            btnSub.FlatAppearance.BorderColor = UIStyleHelper.PrimaryBlue;
 
             TaiDanhSachSanPham();
         }
@@ -474,70 +490,230 @@ namespace QuanLyBanMayVT
         {
             var lbl = new Label
             {
-                Text = "📋  Lịch sử đơn hàng — click vào đơn để xem chi tiết sản phẩm",
-                Dock = DockStyle.Top, Height = 36,
-                Font = new Font("Segoe UI", 9.5F, FontStyle.Italic),
-                ForeColor = Color.FromArgb(148, 163, 184),
+                Text = "📋  Lịch sử đơn hàng của bạn — Nhấn nút [🔍 Xem Chi Tiết] hoặc Double-click vào đơn để xem món hàng",
+                Dock = DockStyle.Top, Height = 40,
+                Font = new Font("Segoe UI", 9.5F, FontStyle.Bold),
+                ForeColor = Color.FromArgb(51, 65, 85),
                 TextAlign = ContentAlignment.MiddleLeft,
-                Padding = new Padding(10, 0, 0, 0),
+                Padding = new Padding(12, 0, 0, 0),
                 BackColor = UIStyleHelper.BgCard
             };
-            var split = new SplitContainer
-            {
-                Dock = DockStyle.Fill, Orientation = Orientation.Horizontal, SplitterDistance = 260
-            };
+
             dgvDonHang = new DataGridView
             {
-                Dock = DockStyle.Fill, AutoSizeColumnsMode = DataGridViewAutoSizeColumnsMode.Fill,
+                Dock = DockStyle.Fill,
+                AutoSizeColumnsMode = DataGridViewAutoSizeColumnsMode.Fill,
                 SelectionMode = DataGridViewSelectionMode.FullRowSelect,
                 MultiSelect = false, ReadOnly = true, AllowUserToAddRows = false
             };
             UIStyleHelper.StyleDataGridView(dgvDonHang);
-            dgvDonHang.SelectionChanged += DgvDonHang_SelectionChanged;
+            dgvDonHang.CellContentClick += DgvDonHang_CellContentClick;
+            dgvDonHang.CellDoubleClick += DgvDonHang_CellDoubleClick;
 
-            dgvChiTietDH = new DataGridView
+            // ── PAGINATION BAR ──────────────────────────────────────────
+            pnlOrderPagination = new Panel
             {
-                Dock = DockStyle.Fill, AutoSizeColumnsMode = DataGridViewAutoSizeColumnsMode.Fill,
-                SelectionMode = DataGridViewSelectionMode.FullRowSelect,
-                ReadOnly = true, AllowUserToAddRows = false
+                Dock = DockStyle.Bottom,
+                Height = 52,
+                BackColor = UIStyleHelper.BgCard,
+                Padding = new Padding(16, 0, 16, 0)
             };
-            UIStyleHelper.StyleDataGridView(dgvChiTietDH);
-            split.Panel1.Controls.Add(dgvDonHang);
-            split.Panel2.Controls.Add(dgvChiTietDH);
-            tab.Controls.Add(split);
+            pnlOrderPagination.Paint += (s, e) =>
+                e.Graphics.DrawLine(new Pen(Color.FromArgb(226, 232, 240), 1), 0, 0, pnlOrderPagination.Width, 0);
+
+            lblOrderPageInfo = new Label
+            {
+                AutoSize = true,
+                Font = new Font("Segoe UI", 9F, FontStyle.Bold),
+                ForeColor = Color.FromArgb(100, 116, 139),
+                Location = new Point(16, 17)
+            };
+
+            btnOrderPrev = new Button
+            {
+                Text = "◀",
+                Size = new Size(36, 32),
+                FlatStyle = FlatStyle.Flat,
+                Font = new Font("Segoe UI", 9F, FontStyle.Bold),
+                Cursor = Cursors.Hand
+            };
+            btnOrderPrev.Click += (s, e) => { if (_currentOrderPage > 1) { _currentOrderPage--; RenderCustomerOrderPage(); } };
+
+            btnOrderNext = new Button
+            {
+                Text = "▶",
+                Size = new Size(36, 32),
+                FlatStyle = FlatStyle.Flat,
+                Font = new Font("Segoe UI", 9F, FontStyle.Bold),
+                Cursor = Cursors.Hand
+            };
+            btnOrderNext.Click += (s, e) => {
+                int totalPages = _fullCustomerOrderList.Count == 0 ? 1 : (int)Math.Ceiling((double)_fullCustomerOrderList.Count / OrderPageSize);
+                if (_currentOrderPage < totalPages) { _currentOrderPage++; RenderCustomerOrderPage(); }
+            };
+
+            pnlOrderPageNumbers = new FlowLayoutPanel
+            {
+                AutoSize = true,
+                AutoSizeMode = AutoSizeMode.GrowAndShrink,
+                FlowDirection = FlowDirection.LeftToRight,
+                WrapContents = false,
+                BackColor = Color.Transparent
+            };
+
+            pnlOrderPagination.Controls.Add(lblOrderPageInfo);
+            pnlOrderPagination.Controls.Add(btnOrderPrev);
+            pnlOrderPagination.Controls.Add(pnlOrderPageNumbers);
+            pnlOrderPagination.Controls.Add(btnOrderNext);
+            pnlOrderPagination.Resize += (s, e) => RepositionCustomerOrderPagination();
+
+            tab.Controls.Add(dgvDonHang);
+            tab.Controls.Add(pnlOrderPagination);
             tab.Controls.Add(lbl);
+        }
+
+        private void RepositionCustomerOrderPagination()
+        {
+            if (pnlOrderPagination == null) return;
+            int rightX = pnlOrderPagination.ClientSize.Width - 16;
+            btnOrderNext.Left = rightX - btnOrderNext.Width;
+            btnOrderNext.Top = 10;
+
+            pnlOrderPageNumbers.Left = btnOrderNext.Left - pnlOrderPageNumbers.Width - 6;
+            pnlOrderPageNumbers.Top = 10;
+
+            btnOrderPrev.Left = pnlOrderPageNumbers.Left - btnOrderPrev.Width - 6;
+            btnOrderPrev.Top = 10;
         }
 
         private void TaiLichSuDonHang()
         {
             if (_khachHangCurrent == null) return;
-            var list = new DonHangDAO().GetByMaKhachHang(_khachHangCurrent.MaKhachHang);
-            dgvDonHang.DataSource = list.Select(d => new
+            _fullCustomerOrderList = new DonHangDAO().GetByMaKhachHang(_khachHangCurrent.MaKhachHang);
+            _currentOrderPage = 1;
+            RenderCustomerOrderPage();
+        }
+
+        private void RenderCustomerOrderPage()
+        {
+            int totalCount = _fullCustomerOrderList.Count;
+            int totalPages = totalCount == 0 ? 1 : (int)Math.Ceiling((double)totalCount / OrderPageSize);
+
+            if (_currentOrderPage > totalPages) _currentOrderPage = totalPages;
+            if (_currentOrderPage < 1) _currentOrderPage = 1;
+
+            var pageItems = _fullCustomerOrderList
+                .Skip((_currentOrderPage - 1) * OrderPageSize)
+                .Take(OrderPageSize)
+                .ToList();
+
+            dgvDonHang.DataSource = pageItems.Select(d => new
             {
                 d.MaDonHang, NgayDat = d.NgayDatHang, d.TenPhuongThuc,
                 TongTien = d.TongTien.ToString("N0") + " đ", TrangThai = d.TrangThaiDisplay, d.GhiChu
             }).ToList();
+
             if (dgvDonHang.Columns["MaDonHang"]     != null) dgvDonHang.Columns["MaDonHang"].HeaderText     = "Mã Đơn";
             if (dgvDonHang.Columns["NgayDat"]       != null) dgvDonHang.Columns["NgayDat"].HeaderText       = "Ngày Đặt";
             if (dgvDonHang.Columns["TenPhuongThuc"] != null) dgvDonHang.Columns["TenPhuongThuc"].HeaderText = "Phương Thức TT";
             if (dgvDonHang.Columns["TongTien"]      != null) dgvDonHang.Columns["TongTien"].HeaderText      = "Tổng Tiền";
             if (dgvDonHang.Columns["TrangThai"]     != null) dgvDonHang.Columns["TrangThai"].HeaderText     = "Trạng Thái";
             if (dgvDonHang.Columns["GhiChu"]        != null) dgvDonHang.Columns["GhiChu"].HeaderText        = "Ghi Chú";
+
+            if (!dgvDonHang.Columns.Contains("colXemChiTiet"))
+            {
+                var btnCol = new DataGridViewButtonColumn
+                {
+                    Name = "colXemChiTiet",
+                    HeaderText = "Thao Tác",
+                    Text = "🔍 Xem Chi Tiết",
+                    UseColumnTextForButtonValue = true,
+                    AutoSizeMode = DataGridViewAutoSizeColumnMode.None,
+                    Width = 140,
+                    FlatStyle = FlatStyle.Flat
+                };
+                dgvDonHang.Columns.Add(btnCol);
+            }
+
+            int startIdx = totalCount == 0 ? 0 : (_currentOrderPage - 1) * OrderPageSize + 1;
+            int endIdx = Math.Min(_currentOrderPage * OrderPageSize, totalCount);
+            lblOrderPageInfo.Text = $"Hiển thị {startIdx} - {endIdx} / Tổng {totalCount} đơn hàng (Trang {_currentOrderPage}/{totalPages})";
+
+            btnOrderPrev.Enabled = _currentOrderPage > 1;
+            btnOrderNext.Enabled = _currentOrderPage < totalPages;
+
+            btnOrderPrev.BackColor = btnOrderPrev.Enabled ? Color.White : Color.FromArgb(241, 245, 249);
+            btnOrderPrev.ForeColor = btnOrderPrev.Enabled ? Color.FromArgb(30, 41, 59) : Color.FromArgb(148, 163, 184);
+            btnOrderPrev.FlatAppearance.BorderColor = btnOrderPrev.Enabled ? Color.FromArgb(203, 213, 225) : Color.FromArgb(226, 232, 240);
+            btnOrderPrev.FlatAppearance.BorderSize = 1;
+
+            btnOrderNext.BackColor = btnOrderNext.Enabled ? Color.White : Color.FromArgb(241, 245, 249);
+            btnOrderNext.ForeColor = btnOrderNext.Enabled ? Color.FromArgb(30, 41, 59) : Color.FromArgb(148, 163, 184);
+            btnOrderNext.FlatAppearance.BorderColor = btnOrderNext.Enabled ? Color.FromArgb(203, 213, 225) : Color.FromArgb(226, 232, 240);
+            btnOrderNext.FlatAppearance.BorderSize = 1;
+
+            pnlOrderPageNumbers.Controls.Clear();
+            for (int i = 1; i <= totalPages; i++)
+            {
+                int pageNum = i;
+                var btnNum = new Button
+                {
+                    Text = pageNum.ToString(),
+                    Size = new Size(36, 32),
+                    Margin = new Padding(3, 0, 3, 0),
+                    FlatStyle = FlatStyle.Flat,
+                    Font = new Font("Segoe UI", 9F, FontStyle.Bold),
+                    Cursor = Cursors.Hand
+                };
+
+                if (pageNum == _currentOrderPage)
+                {
+                    btnNum.BackColor = UIStyleHelper.PrimaryBlue;
+                    btnNum.ForeColor = Color.White;
+                    btnNum.FlatAppearance.BorderColor = UIStyleHelper.PrimaryBlue;
+                    btnNum.FlatAppearance.BorderSize = 1;
+                }
+                else
+                {
+                    btnNum.BackColor = Color.White;
+                    btnNum.ForeColor = Color.FromArgb(30, 41, 59);
+                    btnNum.FlatAppearance.BorderColor = Color.FromArgb(203, 213, 225);
+                    btnNum.FlatAppearance.BorderSize = 1;
+                }
+
+                btnNum.Click += (s, e) =>
+                {
+                    _currentOrderPage = pageNum;
+                    RenderCustomerOrderPage();
+                };
+                pnlOrderPageNumbers.Controls.Add(btnNum);
+            }
+
+            RepositionCustomerOrderPagination();
         }
 
-        private void DgvDonHang_SelectionChanged(object? sender, EventArgs e)
+        private void DgvDonHang_CellContentClick(object? sender, DataGridViewCellEventArgs e)
+        {
+            if (e.RowIndex >= 0 && e.ColumnIndex >= 0 && dgvDonHang.Columns[e.ColumnIndex].Name == "colXemChiTiet")
+            {
+                MoPopupChiTietDonHangSelected();
+            }
+        }
+
+        private void DgvDonHang_CellDoubleClick(object? sender, DataGridViewCellEventArgs e)
+        {
+            if (e.RowIndex >= 0)
+            {
+                MoPopupChiTietDonHangSelected();
+            }
+        }
+
+        private void MoPopupChiTietDonHangSelected()
         {
             if (dgvDonHang.CurrentRow == null) return;
             int maDH = (int)dgvDonHang.CurrentRow.Cells["MaDonHang"].Value;
-            var ct = new DonHangDAO().GetChiTiet(maDH);
-            dgvChiTietDH.DataSource = ct.Select(c => new
-            {
-                c.TenSanPham, c.SoLuong, DonGia = c.DonGiaFormatted, ThanhTien = c.ThanhTienFormatted
-            }).ToList();
-            if (dgvChiTietDH.Columns["TenSanPham"] != null) dgvChiTietDH.Columns["TenSanPham"].HeaderText = "Tên Sản Phẩm";
-            if (dgvChiTietDH.Columns["SoLuong"]    != null) dgvChiTietDH.Columns["SoLuong"].HeaderText    = "Số Lượng";
-            if (dgvChiTietDH.Columns["DonGia"]     != null) dgvChiTietDH.Columns["DonGia"].HeaderText     = "Đơn Giá";
-            if (dgvChiTietDH.Columns["ThanhTien"]  != null) dgvChiTietDH.Columns["ThanhTien"].HeaderText  = "Thành Tiền";
+            using var dialog = new frmChiTietDonHangDialog(maDH);
+            dialog.ShowDialog(this);
         }
 
         private void TabControl_SelectedIndexChanged(object? sender, EventArgs e)
@@ -557,7 +733,7 @@ namespace QuanLyBanMayVT
                 SplitterDistance = 640
             };
             split.Panel1.BackColor = UIStyleHelper.BgMain;
-            split.Panel2.BackColor = Color.FromArgb(22, 33, 54);
+            split.Panel2.BackColor = UIStyleHelper.BgCard;
 
             // ──────────────────────────────────────────────────────────
             // CỘT TRÁI: BẢNG CHỌN LINH KIỆN TỪNG DÒNG
@@ -587,9 +763,9 @@ namespace QuanLyBanMayVT
             tblList.RowCount++;
             tblList.RowStyles.Add(new RowStyle(SizeType.Absolute, 38F));
             
-            tblList.Controls.Add(new Label { Text = "LOẠI LINH KIỆN", Font = new Font("Segoe UI", 9.5F, FontStyle.Bold), ForeColor = Color.FromArgb(148, 163, 184), Anchor = AnchorStyles.Left, AutoSize = true }, 0, rowIdx);
-            tblList.Controls.Add(new Label { Text = "CHỌN SẢN PHẨM LINH KIỆN", Font = new Font("Segoe UI", 9.5F, FontStyle.Bold), ForeColor = Color.FromArgb(148, 163, 184), Anchor = AnchorStyles.Left, AutoSize = true }, 1, rowIdx);
-            tblList.Controls.Add(new Label { Text = "ĐƠN GIÁ", Font = new Font("Segoe UI", 9.5F, FontStyle.Bold), ForeColor = Color.FromArgb(148, 163, 184), Anchor = AnchorStyles.Right, AutoSize = true }, 2, rowIdx);
+            tblList.Controls.Add(new Label { Text = "LOẠI LINH KIỆN", Font = new Font("Segoe UI", 9.5F, FontStyle.Bold), ForeColor = Color.FromArgb(71, 85, 105), Anchor = AnchorStyles.Left, AutoSize = true }, 0, rowIdx);
+            tblList.Controls.Add(new Label { Text = "CHỌN SẢN PHẨM LINH KIỆN", Font = new Font("Segoe UI", 9.5F, FontStyle.Bold), ForeColor = Color.FromArgb(71, 85, 105), Anchor = AnchorStyles.Left, AutoSize = true }, 1, rowIdx);
+            tblList.Controls.Add(new Label { Text = "ĐƠN GIÁ", Font = new Font("Segoe UI", 9.5F, FontStyle.Bold), ForeColor = Color.FromArgb(71, 85, 105), Anchor = AnchorStyles.Right, AutoSize = true }, 2, rowIdx);
 
             // Các dòng sản phẩm
             cboCPU       = AddComponentRow(tblList, ref rowIdx, "🔲  Vi Xử Lý (CPU)",      "cpu");
@@ -606,7 +782,7 @@ namespace QuanLyBanMayVT
             // ──────────────────────────────────────────────────────────
             // CỘT PHẢI: TÓM TẮT CẤU HÌNH VÀ NÚT ĐẶT MUA
             // ──────────────────────────────────────────────────────────
-            var pnlRight = new Panel { Dock = DockStyle.Fill, Padding = new Padding(16) };
+            var pnlRight = new Panel { Dock = DockStyle.Fill, Padding = new Padding(16), BackColor = UIStyleHelper.BgCard };
 
             var lblBuildTitle = new Label
             {
@@ -614,11 +790,11 @@ namespace QuanLyBanMayVT
                 Dock = DockStyle.Top,
                 Height = 36,
                 Font = new Font("Segoe UI", 11.5F, FontStyle.Bold),
-                ForeColor = Color.White,
+                ForeColor = Color.FromArgb(17, 24, 39),
                 TextAlign = ContentAlignment.MiddleLeft
             };
 
-            var sepRight = new Panel { Dock = DockStyle.Top, Height = 1, BackColor = Color.FromArgb(51, 65, 85), Margin = new Padding(0, 4, 0, 8) };
+            var sepRight = new Panel { Dock = DockStyle.Top, Height = 1, BackColor = Color.FromArgb(226, 232, 240), Margin = new Padding(0, 4, 0, 8) };
 
             pnlSummaryItems = new FlowLayoutPanel
             {
@@ -635,7 +811,7 @@ namespace QuanLyBanMayVT
                 Dock = DockStyle.Bottom,
                 Height = 40,
                 Font = new Font("Segoe UI", 11.5F, FontStyle.Bold),
-                ForeColor = Color.FromArgb(52, 211, 153),
+                ForeColor = Color.FromArgb(5, 150, 105),
                 TextAlign = ContentAlignment.MiddleLeft
             };
 
@@ -659,14 +835,15 @@ namespace QuanLyBanMayVT
                 Text = "🔄  Bỏ chọn tất cả linh kiện",
                 Dock = DockStyle.Bottom,
                 Height = 34,
-                BackColor = Color.FromArgb(51, 65, 85),
-                ForeColor = Color.White,
+                BackColor = Color.FromArgb(241, 245, 249),
+                ForeColor = Color.FromArgb(71, 85, 105),
                 FlatStyle = FlatStyle.Flat,
-                Font = new Font("Segoe UI", 9F),
+                Font = new Font("Segoe UI", 9F, FontStyle.Bold),
                 Cursor = Cursors.Hand,
                 Margin = new Padding(0, 6, 0, 4)
             };
-            btnReset.FlatAppearance.BorderSize = 0;
+            btnReset.FlatAppearance.BorderColor = Color.FromArgb(203, 213, 225);
+            btnReset.FlatAppearance.BorderSize = 1;
             btnReset.Click += (s, e) => ResetAllSelections();
 
             pnlRight.Controls.Add(pnlSummaryItems);
@@ -690,7 +867,7 @@ namespace QuanLyBanMayVT
             {
                 Text = labelText,
                 Font = new Font("Segoe UI", 9.5F, FontStyle.Bold),
-                ForeColor = Color.FromArgb(226, 232, 240),
+                ForeColor = Color.FromArgb(30, 41, 59),
                 Anchor = AnchorStyles.Left,
                 AutoSize = true,
                 Margin = new Padding(0, 4, 8, 4)
@@ -709,7 +886,7 @@ namespace QuanLyBanMayVT
             {
                 Text = "—",
                 Font = new Font("Segoe UI", 9.5F, FontStyle.Bold),
-                ForeColor = Color.FromArgb(52, 211, 153),
+                ForeColor = Color.FromArgb(5, 150, 105),
                 Anchor = AnchorStyles.Right,
                 AutoSize = true,
                 Margin = new Padding(0, 4, 0, 4)
@@ -803,7 +980,7 @@ namespace QuanLyBanMayVT
                             AutoSize = false,
                             Dock = DockStyle.Fill,
                             Font = new Font("Segoe UI", 8.5F),
-                            ForeColor = Color.FromArgb(203, 213, 225),
+                            ForeColor = Color.FromArgb(30, 41, 59),
                             TextAlign = ContentAlignment.MiddleLeft
                         }, 0, 0);
                         row.Controls.Add(new Label
@@ -812,7 +989,7 @@ namespace QuanLyBanMayVT
                             AutoSize = false,
                             Dock = DockStyle.Fill,
                             Font = new Font("Segoe UI", 8.5F, FontStyle.Bold),
-                            ForeColor = Color.FromArgb(52, 211, 153),
+                            ForeColor = Color.FromArgb(5, 150, 105),
                             TextAlign = ContentAlignment.MiddleRight
                         }, 1, 0);
 

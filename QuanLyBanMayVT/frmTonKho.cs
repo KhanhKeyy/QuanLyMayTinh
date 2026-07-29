@@ -3,6 +3,9 @@ using QuanLyBanMayVT.DataAccess;
 
 namespace QuanLyBanMayVT
 {
+    /// <summary>
+    /// Form Quản lý & Cập nhật số lượng Tồn kho
+    /// </summary>
     public class frmTonKho : Form
     {
         private DataGridView dgvTonKho = null!;
@@ -24,6 +27,71 @@ namespace QuanLyBanMayVT
             this.ForeColor = Color.White;
             this.Font = new Font("Segoe UI", 9.5F);
 
+            // ── TOP PANEL (Cập nhật tồn kho) ──────────────────────────
+            var pnlTop = new Panel
+            {
+                Dock = DockStyle.Top,
+                Height = 60,
+                BackColor = UIStyleHelper.BgCard
+            };
+
+            var flowTop = new FlowLayoutPanel
+            {
+                Dock = DockStyle.Fill,
+                FlowDirection = FlowDirection.LeftToRight,
+                WrapContents = false,
+                Padding = new Padding(15, 12, 15, 10),
+                BackColor = UIStyleHelper.BgCard
+            };
+
+            lblSelectedSP = new Label
+            {
+                Text = "Sản phẩm chọn: (chưa chọn)",
+                AutoSize = true,
+                Font = new Font("Segoe UI", 10F, FontStyle.Bold),
+                ForeColor = Color.FromArgb(37, 99, 235),
+                Margin = new Padding(0, 6, 25, 0)
+            };
+
+            var lblSL = new Label
+            {
+                Text = "Số lượng tồn mới:",
+                AutoSize = true,
+                ForeColor = Color.FromArgb(17, 24, 39),
+                Font = new Font("Segoe UI", 9.5F, FontStyle.Bold),
+                Margin = new Padding(0, 6, 8, 0)
+            };
+
+            numSoLuongTon = new NumericUpDown
+            {
+                Width = 110,
+                Maximum = 10000,
+                Margin = new Padding(0, 2, 20, 0)
+            };
+            UIStyleHelper.StyleNumeric(numSoLuongTon);
+
+            btnCapNhat = new Button
+            {
+                Text = "💾 Cập nhật tồn kho",
+                Size = new Size(170, 34),
+                Margin = new Padding(0, 0, 0, 0),
+                BackColor = UIStyleHelper.SuccessGreen,
+                ForeColor = Color.White,
+                FlatStyle = FlatStyle.Flat,
+                Font = new Font("Segoe UI", 9.5F, FontStyle.Bold),
+                Cursor = Cursors.Hand
+            };
+            btnCapNhat.FlatAppearance.BorderSize = 0;
+            btnCapNhat.Click += BtnCapNhat_Click;
+
+            flowTop.Controls.Add(lblSelectedSP);
+            flowTop.Controls.Add(lblSL);
+            flowTop.Controls.Add(numSoLuongTon);
+            flowTop.Controls.Add(btnCapNhat);
+
+            pnlTop.Controls.Add(flowTop);
+
+            // ── DATAGRIDVIEW ───────────────────────────────────────────
             dgvTonKho = new DataGridView
             {
                 Dock = DockStyle.Fill,
@@ -36,48 +104,8 @@ namespace QuanLyBanMayVT
             UIStyleHelper.StyleDataGridView(dgvTonKho);
             dgvTonKho.SelectionChanged += DgvTonKho_SelectionChanged;
 
-            var pnlBottom = new Panel
-            {
-                Dock = DockStyle.Bottom,
-                Height = 65,
-                Padding = new Padding(12),
-                BackColor = UIStyleHelper.BgCard
-            };
-
-            lblSelectedSP = new Label
-            {
-                Text = "Sản phẩm chọn: (chưa chọn)",
-                Location = new Point(12, 22),
-                AutoSize = true,
-                Font = new Font("Segoe UI", 10F, FontStyle.Bold),
-                ForeColor = Color.FromArgb(99, 179, 237)
-            };
-
-            var lblSL = new Label { Text = "Số lượng tồn mới:", Location = new Point(360, 22), AutoSize = true, ForeColor = UIStyleHelper.TextMuted };
-            numSoLuongTon = new NumericUpDown { Location = new Point(485, 18), Width = 110, Maximum = 10000 };
-            UIStyleHelper.StyleNumeric(numSoLuongTon);
-
-            btnCapNhat = new Button
-            {
-                Text = "💾 Cập nhật tồn kho",
-                Location = new Point(610, 15),
-                Size = new Size(170, 35),
-                BackColor = UIStyleHelper.SuccessGreen,
-                ForeColor = Color.White,
-                FlatStyle = FlatStyle.Flat,
-                Font = new Font("Segoe UI", 9.5F, FontStyle.Bold),
-                Cursor = Cursors.Hand
-            };
-            btnCapNhat.FlatAppearance.BorderSize = 0;
-            btnCapNhat.Click += BtnCapNhat_Click;
-
-            pnlBottom.Controls.Add(lblSelectedSP);
-            pnlBottom.Controls.Add(lblSL);
-            pnlBottom.Controls.Add(numSoLuongTon);
-            pnlBottom.Controls.Add(btnCapNhat);
-
             this.Controls.Add(dgvTonKho);
-            this.Controls.Add(pnlBottom);
+            this.Controls.Add(pnlTop);
         }
 
         private void LoadData()

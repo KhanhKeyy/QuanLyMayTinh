@@ -4,17 +4,16 @@ using QuanLyBanMayVT.Models;
 
 namespace QuanLyBanMayVT
 {
+    /// <summary>
+    /// Form Quản lý Danh mục sản phẩm với Pop-up Dialog Thêm/Sửa
+    /// </summary>
     public class frmDanhMuc : Form
     {
         private DataGridView dgvDanhMuc = null!;
-        private TextBox txtTenDanhMuc = null!;
-        private TextBox txtMoTa = null!;
+
         private Button btnThem = null!;
         private Button btnSua = null!;
         private Button btnXoa = null!;
-        private Button btnLamMoi = null!;
-
-        private int _selectedId = 0;
 
         public frmDanhMuc()
         {
@@ -26,9 +25,75 @@ namespace QuanLyBanMayVT
         {
             this.Text = "Quản lý danh mục sản phẩm";
             this.BackColor = UIStyleHelper.BgMain;
-            this.ForeColor = UIStyleHelper.TextDark;
+            this.ForeColor = Color.White;
             this.Font = new Font("Segoe UI", 9.5F);
 
+            // ── TOP PANEL ──────────────────────────────────────────────
+            var pnlTop = new Panel
+            {
+                Dock = DockStyle.Top,
+                Height = 60,
+                BackColor = UIStyleHelper.BgCard
+            };
+
+            var flowTop = new FlowLayoutPanel
+            {
+                Dock = DockStyle.Fill,
+                FlowDirection = FlowDirection.LeftToRight,
+                WrapContents = false,
+                Padding = new Padding(15, 12, 15, 10),
+                BackColor = UIStyleHelper.BgCard
+            };
+
+            btnThem = new Button
+            {
+                Text = "➕ Thêm danh mục",
+                Size = new Size(165, 36),
+                Margin = new Padding(0, 0, 10, 0),
+                BackColor = UIStyleHelper.SuccessGreen,
+                ForeColor = Color.White,
+                FlatStyle = FlatStyle.Flat,
+                Font = new Font("Segoe UI", 9.5F, FontStyle.Bold),
+                Cursor = Cursors.Hand
+            };
+            btnThem.FlatAppearance.BorderSize = 0;
+            btnThem.Click += (s, e) => MoPopupThemMoi();
+
+            btnSua = new Button
+            {
+                Text = "✏️ Sửa",
+                Size = new Size(90, 36),
+                Margin = new Padding(0, 0, 10, 0),
+                BackColor = UIStyleHelper.PrimaryBlue,
+                ForeColor = Color.White,
+                FlatStyle = FlatStyle.Flat,
+                Font = new Font("Segoe UI", 9.5F, FontStyle.Bold),
+                Cursor = Cursors.Hand
+            };
+            btnSua.FlatAppearance.BorderSize = 0;
+            btnSua.Click += (s, e) => MoPopupSuaSelected();
+
+            btnXoa = new Button
+            {
+                Text = "🗑️ Xóa",
+                Size = new Size(90, 36),
+                Margin = new Padding(0, 0, 0, 0),
+                BackColor = UIStyleHelper.DangerRed,
+                ForeColor = Color.White,
+                FlatStyle = FlatStyle.Flat,
+                Font = new Font("Segoe UI", 9.5F, FontStyle.Bold),
+                Cursor = Cursors.Hand
+            };
+            btnXoa.FlatAppearance.BorderSize = 0;
+            btnXoa.Click += (s, e) => XoaSelected();
+
+            flowTop.Controls.Add(btnThem);
+            flowTop.Controls.Add(btnSua);
+            flowTop.Controls.Add(btnXoa);
+
+            pnlTop.Controls.Add(flowTop);
+
+            // ── DATAGRIDVIEW ───────────────────────────────────────────
             dgvDanhMuc = new DataGridView
             {
                 Dock = DockStyle.Fill,
@@ -39,64 +104,13 @@ namespace QuanLyBanMayVT
                 AllowUserToAddRows = false
             };
             UIStyleHelper.StyleDataGridView(dgvDanhMuc);
-            dgvDanhMuc.SelectionChanged += DgvDanhMuc_SelectionChanged;
-
-            var pnlInput = new Panel
+            dgvDanhMuc.CellDoubleClick += (s, e) =>
             {
-                Dock = DockStyle.Bottom,
-                Height = 150,
-                Padding = new Padding(15),
-                BackColor = UIStyleHelper.BgCard
+                if (e.RowIndex >= 0) MoPopupSuaSelected();
             };
-            // Labels inside input panel should use dark text
-            var labelStyle = new Action<Label>(lbl => { lbl.ForeColor = UIStyleHelper.TextMuted; });
-
-            pnlInput.Controls.Add(new Label { Text = "Tên danh mục:", Location = new Point(15, 22), AutoSize = true, ForeColor = UIStyleHelper.TextMuted });
-            txtTenDanhMuc = new TextBox { Location = new Point(170, 17), Width = 300 };
-            UIStyleHelper.StyleTextBox(txtTenDanhMuc);
-            pnlInput.Controls.Add(txtTenDanhMuc);
-
-            pnlInput.Controls.Add(new Label { Text = "Mô tả:", Location = new Point(15, 67), AutoSize = true, ForeColor = UIStyleHelper.TextMuted });
-            txtMoTa = new TextBox { Location = new Point(170, 62), Width = 300, Multiline = true, Height = 65 };
-            UIStyleHelper.StyleTextBox(txtMoTa);
-            pnlInput.Controls.Add(txtMoTa);
-
-            btnThem = CreateBtn("Thêm mới", UIStyleHelper.PrimaryBlue, 500, 17);
-            btnThem.Click += BtnThem_Click;
-
-            btnSua = CreateBtn("Cập nhật", UIStyleHelper.SuccessGreen, 500, 62);
-            btnSua.Click += BtnSua_Click;
-
-            btnXoa = CreateBtn("Xóa", UIStyleHelper.DangerRed, 635, 17);
-            btnXoa.Click += BtnXoa_Click;
-
-            btnLamMoi = CreateBtn("Làm mới", Color.FromArgb(100, 116, 139), 635, 62);
-            btnLamMoi.Click += (s, e) => ClearForm();
-
-            pnlInput.Controls.Add(btnThem);
-            pnlInput.Controls.Add(btnSua);
-            pnlInput.Controls.Add(btnXoa);
-            pnlInput.Controls.Add(btnLamMoi);
 
             this.Controls.Add(dgvDanhMuc);
-            this.Controls.Add(pnlInput);
-        }
-
-        private Button CreateBtn(string text, Color bg, int x, int y)
-        {
-            var btn = new Button
-            {
-                Text = text,
-                Location = new Point(x, y),
-                Size = new Size(115, 34),
-                BackColor = bg,
-                ForeColor = Color.White,
-                FlatStyle = FlatStyle.Flat,
-                Font = new Font("Segoe UI", 9.5F, FontStyle.Bold),
-                Cursor = Cursors.Hand
-            };
-            btn.FlatAppearance.BorderSize = 0;
-            return btn;
+            this.Controls.Add(pnlTop);
         }
 
         private void LoadData()
@@ -109,72 +123,52 @@ namespace QuanLyBanMayVT
             if (dgvDanhMuc.Columns["MoTa"] != null) dgvDanhMuc.Columns["MoTa"].HeaderText = "Mô Tả";
         }
 
-        private void DgvDanhMuc_SelectionChanged(object? sender, EventArgs e)
+        private void MoPopupThemMoi()
         {
-            if (dgvDanhMuc.CurrentRow == null) return;
-            if (dgvDanhMuc.CurrentRow.DataBoundItem is DanhMucSanPham dm)
+            using var dialog = new frmEditDanhMucDialog(null);
+            if (dialog.ShowDialog(this) == DialogResult.OK)
             {
-                _selectedId = dm.MaDanhMuc;
-                txtTenDanhMuc.Text = dm.TenDanhMuc;
-                txtMoTa.Text = dm.MoTa ?? "";
-            }
-        }
-
-        private void ClearForm()
-        {
-            _selectedId = 0;
-            txtTenDanhMuc.Clear();
-            txtMoTa.Clear();
-        }
-
-        private void BtnThem_Click(object? sender, EventArgs e)
-        {
-            if (string.IsNullOrWhiteSpace(txtTenDanhMuc.Text))
-            {
-                MessageBox.Show("Vui lòng nhập tên danh mục.", "Thông báo", MessageBoxButtons.OK, MessageBoxIcon.Warning);
-                return;
-            }
-
-            var dm = new DanhMucSanPham { TenDanhMuc = txtTenDanhMuc.Text.Trim(), MoTa = txtMoTa.Text.Trim() };
-            if (new DanhMucSanPhamDAO().Insert(dm))
-            {
-                MessageBox.Show("Thêm danh mục thành công!", "Thông báo", MessageBoxButtons.OK, MessageBoxIcon.Information);
-                ClearForm();
                 LoadData();
             }
         }
 
-        private void BtnSua_Click(object? sender, EventArgs e)
+        private void MoPopupSuaSelected()
         {
-            if (_selectedId <= 0)
+            if (dgvDanhMuc.CurrentRow == null)
             {
                 MessageBox.Show("Vui lòng chọn danh mục cần sửa.", "Thông báo", MessageBoxButtons.OK, MessageBoxIcon.Warning);
                 return;
             }
 
-            var dm = new DanhMucSanPham { MaDanhMuc = _selectedId, TenDanhMuc = txtTenDanhMuc.Text.Trim(), MoTa = txtMoTa.Text.Trim() };
-            if (new DanhMucSanPhamDAO().Update(dm))
+            if (dgvDanhMuc.CurrentRow.DataBoundItem is DanhMucSanPham dm)
             {
-                MessageBox.Show("Cập nhật danh mục thành công!", "Thông báo", MessageBoxButtons.OK, MessageBoxIcon.Information);
-                ClearForm();
-                LoadData();
+                using var dialog = new frmEditDanhMucDialog(dm);
+                if (dialog.ShowDialog(this) == DialogResult.OK)
+                {
+                    LoadData();
+                }
             }
         }
 
-        private void BtnXoa_Click(object? sender, EventArgs e)
+        private void XoaSelected()
         {
-            if (_selectedId <= 0)
+            if (dgvDanhMuc.CurrentRow == null)
             {
                 MessageBox.Show("Vui lòng chọn danh mục cần xóa.", "Thông báo", MessageBoxButtons.OK, MessageBoxIcon.Warning);
                 return;
             }
 
-            var res = MessageBox.Show("Bạn có chắc muốn xóa danh mục này?", "Xác nhận", MessageBoxButtons.YesNo, MessageBoxIcon.Question);
-            if (res == DialogResult.Yes && new DanhMucSanPhamDAO().Delete(_selectedId))
+            if (dgvDanhMuc.CurrentRow.DataBoundItem is DanhMucSanPham dm)
             {
-                MessageBox.Show("Đã xóa danh mục!", "Thông báo", MessageBoxButtons.OK, MessageBoxIcon.Information);
-                ClearForm();
-                LoadData();
+                var res = MessageBox.Show($"Bạn có chắc muốn xóa danh mục '{dm.TenDanhMuc}' (Mã #{dm.MaDanhMuc})?", "Xác nhận xóa", MessageBoxButtons.YesNo, MessageBoxIcon.Question);
+                if (res == DialogResult.Yes)
+                {
+                    if (new DanhMucSanPhamDAO().Delete(dm.MaDanhMuc))
+                    {
+                        MessageBox.Show("Đã xóa danh mục thành công!", "Thông báo", MessageBoxButtons.OK, MessageBoxIcon.Information);
+                        LoadData();
+                    }
+                }
             }
         }
     }

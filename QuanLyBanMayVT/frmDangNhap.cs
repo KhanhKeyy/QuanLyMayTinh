@@ -182,19 +182,5 @@ namespace QuanLyBanMayVT
         {
             btnDangNhap.BackColor = Color.FromArgb(17, 24, 39);
         }
-
-        // ═══════════════════════════════════════════════════════════════
-        // VẼ VIỀN CHO PANEL CARD
-        // ═══════════════════════════════════════════════════════════════
-        private void PanelCard_Paint(object sender, PaintEventArgs e)
-        {
-            var panel = (Panel)sender;
-            var g = e.Graphics;
-            g.SmoothingMode = System.Drawing.Drawing2D.SmoothingMode.AntiAlias;
-
-            // Viền xám nhẹ cho card trắng
-            using var pen = new Pen(Color.FromArgb(209, 213, 219), 1f);
-            g.DrawRectangle(pen, 0, 0, panel.Width - 1, panel.Height - 1);
-        }
     }
 }

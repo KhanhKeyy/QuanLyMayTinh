@@ -23,48 +23,52 @@ namespace QuanLyBanMayVT
 
             // ── panelTop ─────────────────────────────────────────────
             this.panelTop.Dock = DockStyle.Top;
-            this.panelTop.Height = 60;
-            this.panelTop.BackColor = Color.FromArgb(30, 41, 59);
+            this.panelTop.Height = 55;
+            this.panelTop.BackColor = Color.White;
             this.panelTop.Padding = new Padding(20, 0, 20, 0);
             this.panelTop.Controls.Add(this.lblChaoMung);
             this.panelTop.Controls.Add(this.btnDangXuat);
+            this.panelTop.Paint += (s, e) =>
+                e.Graphics.DrawLine(new Pen(Color.FromArgb(229, 231, 235), 1),
+                    0, panelTop.Height - 1, panelTop.Width, panelTop.Height - 1);
 
             // ── lblChaoMung ──────────────────────────────────────────
             this.lblChaoMung.AutoSize = false;
-            this.lblChaoMung.Size = new Size(500, 60);
+            this.lblChaoMung.Size = new Size(500, 55);
             this.lblChaoMung.Location = new Point(20, 0);
-            this.lblChaoMung.Font = new Font("Segoe UI", 14F, FontStyle.Bold);
-            this.lblChaoMung.ForeColor = Color.FromArgb(99, 179, 237);
+            this.lblChaoMung.Font = new Font("Segoe UI", 13F, FontStyle.Bold);
+            this.lblChaoMung.ForeColor = Color.FromArgb(17, 24, 39);
             this.lblChaoMung.TextAlign = ContentAlignment.MiddleLeft;
             this.lblChaoMung.Text = "Chào mừng!";
             this.lblChaoMung.Name = "lblChaoMung";
 
             // ── btnDangXuat ──────────────────────────────────────────
             this.btnDangXuat.Text = "🚪 Đăng xuất";
-            this.btnDangXuat.Size = new Size(110, 36);
-            this.btnDangXuat.Location = new Point(1060, 12);
-            this.btnDangXuat.Font = new Font("Segoe UI", 9F);
-            this.btnDangXuat.BackColor = Color.FromArgb(127, 29, 29);
-            this.btnDangXuat.ForeColor = Color.White;
+            this.btnDangXuat.Size = new Size(110, 34);
+            this.btnDangXuat.Location = new Point(1060, 10);
+            this.btnDangXuat.Font = new Font("Segoe UI", 9F, FontStyle.Bold);
+            this.btnDangXuat.BackColor = Color.FromArgb(254, 242, 242);
+            this.btnDangXuat.ForeColor = Color.FromArgb(220, 38, 38);
             this.btnDangXuat.FlatStyle = FlatStyle.Flat;
-            this.btnDangXuat.FlatAppearance.BorderSize = 0;
+            this.btnDangXuat.FlatAppearance.BorderColor = Color.FromArgb(252, 165, 165);
+            this.btnDangXuat.FlatAppearance.BorderSize = 1;
             this.btnDangXuat.Cursor = Cursors.Hand;
             this.btnDangXuat.Click += btnDangXuat_Click;
             this.btnDangXuat.Name = "btnDangXuat";
 
             // ── panelMain ────────────────────────────────────────────
             this.panelMain.Dock = DockStyle.Fill;
-            this.panelMain.BackColor = Color.FromArgb(15, 23, 42);
+            this.panelMain.BackColor = Color.FromArgb(248, 250, 252);
             this.panelMain.Padding = new Padding(10);
             this.panelMain.Name = "panelMain";
 
             // ── frmKhachHang ─────────────────────────────────────────
-            this.AutoScaleDimensions = new SizeF(7F, 15F);
-            this.AutoScaleMode = AutoScaleMode.Font;
+            this.AutoScaleDimensions = new SizeF(96F, 96F);
+            this.AutoScaleMode = AutoScaleMode.Dpi;
             this.ClientSize = new Size(1200, 700);
             this.Controls.Add(this.panelMain);
             this.Controls.Add(this.panelTop);
-            this.BackColor = Color.FromArgb(15, 23, 42);
+            this.BackColor = Color.FromArgb(248, 250, 252);
             this.Name = "frmKhachHang";
             this.StartPosition = FormStartPosition.CenterScreen;
             this.WindowState = FormWindowState.Maximized;

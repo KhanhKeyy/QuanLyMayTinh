@@ -12,10 +12,21 @@ namespace QuanLyBanMayVT
         private readonly bool _cheBoDuyet;
 
         private DataGridView dgvDonHang = null!;
-        private DataGridView dgvChiTiet = null!;
         private ComboBox cboTrangThai = null!;
+        private Button btnXemChiTiet = null!;
         private Button btnXacNhan = null!;
         private Button btnHuy = null!;
+
+        // Phân trang
+        private int _currentPage = 1;
+        private const int PageSize = 10;
+        private List<DonHang> _fullOrderList = new();
+
+        private Panel pnlPagination = null!;
+        private Label lblPageInfo = null!;
+        private Button btnPrev = null!;
+        private Button btnNext = null!;
+        private FlowLayoutPanel pnlPageNumbers = null!;
 
         public frmDonHang(bool cheBoDuyet = false)
         {
@@ -51,7 +62,7 @@ namespace QuanLyBanMayVT
             {
                 Text = "Lọc trạng thái:",
                 AutoSize = true,
-                ForeColor = Color.White,
+                ForeColor = Color.FromArgb(17, 24, 39),
                 Font = new Font("Segoe UI", 10F, FontStyle.Bold),
                 Anchor = AnchorStyles.Left | AnchorStyles.Top,
                 Margin = new Padding(0, 6, 8, 0)
@@ -67,8 +78,24 @@ namespace QuanLyBanMayVT
             cboTrangThai.SelectedIndex = 0;
             cboTrangThai.SelectedIndexChanged += (s, e) => LoadData();
 
+            btnXemChiTiet = new Button
+            {
+                Text = "🔍 Xem chi tiết đơn",
+                AutoSize = true,
+                Padding = new Padding(14, 6, 14, 6),
+                Margin = new Padding(0, 0, 12, 0),
+                BackColor = UIStyleHelper.PrimaryBlue,
+                ForeColor = Color.White,
+                FlatStyle = FlatStyle.Flat,
+                Font = new Font("Segoe UI", 9.5F, FontStyle.Bold),
+                Cursor = Cursors.Hand
+            };
+            btnXemChiTiet.FlatAppearance.BorderSize = 0;
+            btnXemChiTiet.Click += (s, e) => MoPopupChiTietSelected();
+
             tblTop.Controls.Add(lblTT);
             tblTop.Controls.Add(cboTrangThai);
+            tblTop.Controls.Add(btnXemChiTiet);
 
             if (_cheBoDuyet || UserSession.IsNVBanHang || UserSession.IsQuanLy)
             {
@@ -106,13 +133,6 @@ namespace QuanLyBanMayVT
                 tblTop.Controls.Add(btnHuy);
             }
 
-            var split = new SplitContainer
-            {
-                Dock = DockStyle.Fill,
-                Orientation = Orientation.Horizontal,
-                SplitterDistance = 280
-            };
-
             dgvDonHang = new DataGridView
             {
                 Dock = DockStyle.Fill,
@@ -123,31 +143,108 @@ namespace QuanLyBanMayVT
                 AllowUserToAddRows = false
             };
             UIStyleHelper.StyleDataGridView(dgvDonHang);
-            dgvDonHang.SelectionChanged += DgvDonHang_SelectionChanged;
-
-            dgvChiTiet = new DataGridView
+            dgvDonHang.CellDoubleClick += (s, e) =>
             {
-                Dock = DockStyle.Fill,
-                AutoSizeColumnsMode = DataGridViewAutoSizeColumnsMode.Fill,
-                SelectionMode = DataGridViewSelectionMode.FullRowSelect,
-                ReadOnly = true,
-                AllowUserToAddRows = false
+                if (e.RowIndex >= 0) MoPopupChiTietSelected();
             };
-            UIStyleHelper.StyleDataGridView(dgvChiTiet);
 
-            split.Panel1.Controls.Add(dgvDonHang);
-            split.Panel2.Controls.Add(dgvChiTiet);
+            // ── PAGINATION BAR ──────────────────────────────────────────
+            pnlPagination = new Panel
+            {
+                Dock = DockStyle.Bottom,
+                Height = 52,
+                BackColor = UIStyleHelper.BgCard,
+                Padding = new Padding(16, 0, 16, 0)
+            };
+            pnlPagination.Paint += (s, e) =>
+                e.Graphics.DrawLine(new Pen(Color.FromArgb(226, 232, 240), 1), 0, 0, pnlPagination.Width, 0);
 
-            this.Controls.Add(split);
+            lblPageInfo = new Label
+            {
+                AutoSize = true,
+                Font = new Font("Segoe UI", 9F, FontStyle.Bold),
+                ForeColor = Color.FromArgb(100, 116, 139),
+                Location = new Point(16, 17)
+            };
+
+            btnPrev = new Button
+            {
+                Text = "◀",
+                Size = new Size(36, 32),
+                FlatStyle = FlatStyle.Flat,
+                Font = new Font("Segoe UI", 9F, FontStyle.Bold),
+                Cursor = Cursors.Hand
+            };
+            btnPrev.Click += (s, e) => { if (_currentPage > 1) { _currentPage--; RenderPage(); } };
+
+            btnNext = new Button
+            {
+                Text = "▶",
+                Size = new Size(36, 32),
+                FlatStyle = FlatStyle.Flat,
+                Font = new Font("Segoe UI", 9F, FontStyle.Bold),
+                Cursor = Cursors.Hand
+            };
+            btnNext.Click += (s, e) => {
+                int totalPages = _fullOrderList.Count == 0 ? 1 : (int)Math.Ceiling((double)_fullOrderList.Count / PageSize);
+                if (_currentPage < totalPages) { _currentPage++; RenderPage(); }
+            };
+
+            pnlPageNumbers = new FlowLayoutPanel
+            {
+                AutoSize = true,
+                AutoSizeMode = AutoSizeMode.GrowAndShrink,
+                FlowDirection = FlowDirection.LeftToRight,
+                WrapContents = false,
+                BackColor = Color.Transparent
+            };
+
+            pnlPagination.Controls.Add(lblPageInfo);
+            pnlPagination.Controls.Add(btnPrev);
+            pnlPagination.Controls.Add(pnlPageNumbers);
+            pnlPagination.Controls.Add(btnNext);
+            pnlPagination.Resize += (s, e) => RepositionPaginationControls();
+
+            this.Controls.Add(dgvDonHang);
+            this.Controls.Add(pnlPagination);
             this.Controls.Add(tblTop);
+        }
+
+        private void RepositionPaginationControls()
+        {
+            int rightX = pnlPagination.ClientSize.Width - 16;
+            btnNext.Left = rightX - btnNext.Width;
+            btnNext.Top = 10;
+
+            pnlPageNumbers.Left = btnNext.Left - pnlPageNumbers.Width - 6;
+            pnlPageNumbers.Top = 10;
+
+            btnPrev.Left = pnlPageNumbers.Left - btnPrev.Width - 6;
+            btnPrev.Top = 10;
         }
 
         private void LoadData()
         {
             string? filterTT = cboTrangThai.SelectedIndex > 0 ? cboTrangThai.SelectedItem?.ToString() : null;
-            var list = new DonHangDAO().GetAll(filterTT);
+            _fullOrderList = new DonHangDAO().GetAll(filterTT);
+            _currentPage = 1;
+            RenderPage();
+        }
 
-            dgvDonHang.DataSource = list.Select(d => new
+        private void RenderPage()
+        {
+            int totalCount = _fullOrderList.Count;
+            int totalPages = totalCount == 0 ? 1 : (int)Math.Ceiling((double)totalCount / PageSize);
+
+            if (_currentPage > totalPages) _currentPage = totalPages;
+            if (_currentPage < 1) _currentPage = 1;
+
+            var pageItems = _fullOrderList
+                .Skip((_currentPage - 1) * PageSize)
+                .Take(PageSize)
+                .ToList();
+
+            dgvDonHang.DataSource = pageItems.Select(d => new
             {
                 d.MaDonHang,
                 d.TenKhachHang,
@@ -167,26 +264,75 @@ namespace QuanLyBanMayVT
             if (dgvDonHang.Columns["TrangThai"] != null) dgvDonHang.Columns["TrangThai"].HeaderText = "Trạng Thái";
             if (dgvDonHang.Columns["NhanVienXacNhan"] != null) dgvDonHang.Columns["NhanVienXacNhan"].HeaderText = "NV Xác Nhận";
             if (dgvDonHang.Columns["GhiChu"] != null) dgvDonHang.Columns["GhiChu"].HeaderText = "Ghi Chú";
+
+            int startIdx = totalCount == 0 ? 0 : (_currentPage - 1) * PageSize + 1;
+            int endIdx = Math.Min(_currentPage * PageSize, totalCount);
+            lblPageInfo.Text = $"Hiển thị {startIdx} - {endIdx} / Tổng {totalCount} đơn hàng (Trang {_currentPage}/{totalPages})";
+
+            btnPrev.Enabled = _currentPage > 1;
+            btnNext.Enabled = _currentPage < totalPages;
+
+            btnPrev.BackColor = btnPrev.Enabled ? Color.White : Color.FromArgb(241, 245, 249);
+            btnPrev.ForeColor = btnPrev.Enabled ? Color.FromArgb(30, 41, 59) : Color.FromArgb(148, 163, 184);
+            btnPrev.FlatAppearance.BorderColor = btnPrev.Enabled ? Color.FromArgb(203, 213, 225) : Color.FromArgb(226, 232, 240);
+            btnPrev.FlatAppearance.BorderSize = 1;
+
+            btnNext.BackColor = btnNext.Enabled ? Color.White : Color.FromArgb(241, 245, 249);
+            btnNext.ForeColor = btnNext.Enabled ? Color.FromArgb(30, 41, 59) : Color.FromArgb(148, 163, 184);
+            btnNext.FlatAppearance.BorderColor = btnNext.Enabled ? Color.FromArgb(203, 213, 225) : Color.FromArgb(226, 232, 240);
+            btnNext.FlatAppearance.BorderSize = 1;
+
+            pnlPageNumbers.Controls.Clear();
+            for (int i = 1; i <= totalPages; i++)
+            {
+                int pageNum = i;
+                var btnNum = new Button
+                {
+                    Text = pageNum.ToString(),
+                    Size = new Size(36, 32),
+                    Margin = new Padding(3, 0, 3, 0),
+                    FlatStyle = FlatStyle.Flat,
+                    Font = new Font("Segoe UI", 9F, FontStyle.Bold),
+                    Cursor = Cursors.Hand
+                };
+
+                if (pageNum == _currentPage)
+                {
+                    btnNum.BackColor = UIStyleHelper.PrimaryBlue;
+                    btnNum.ForeColor = Color.White;
+                    btnNum.FlatAppearance.BorderColor = UIStyleHelper.PrimaryBlue;
+                    btnNum.FlatAppearance.BorderSize = 1;
+                }
+                else
+                {
+                    btnNum.BackColor = Color.White;
+                    btnNum.ForeColor = Color.FromArgb(30, 41, 59);
+                    btnNum.FlatAppearance.BorderColor = Color.FromArgb(203, 213, 225);
+                    btnNum.FlatAppearance.BorderSize = 1;
+                }
+
+                btnNum.Click += (s, e) =>
+                {
+                    _currentPage = pageNum;
+                    RenderPage();
+                };
+                pnlPageNumbers.Controls.Add(btnNum);
+            }
+
+            RepositionPaginationControls();
         }
 
-        private void DgvDonHang_SelectionChanged(object? sender, EventArgs e)
+        private void MoPopupChiTietSelected()
         {
-            if (dgvDonHang.CurrentRow == null) return;
-            int maDH = (int)dgvDonHang.CurrentRow.Cells["MaDonHang"].Value;
-            var chiTiet = new DonHangDAO().GetChiTiet(maDH);
-
-            dgvChiTiet.DataSource = chiTiet.Select(c => new
+            if (dgvDonHang.CurrentRow == null)
             {
-                c.TenSanPham,
-                c.SoLuong,
-                DonGia = c.DonGiaFormatted,
-                ThanhTien = c.ThanhTienFormatted
-            }).ToList();
+                MessageBox.Show("Vui lòng chọn đơn hàng cần xem chi tiết.", "Thông báo", MessageBoxButtons.OK, MessageBoxIcon.Warning);
+                return;
+            }
 
-            if (dgvChiTiet.Columns["TenSanPham"] != null) dgvChiTiet.Columns["TenSanPham"].HeaderText = "Sản Phẩm";
-            if (dgvChiTiet.Columns["SoLuong"] != null) dgvChiTiet.Columns["SoLuong"].HeaderText = "Số Lượng";
-            if (dgvChiTiet.Columns["DonGia"] != null) dgvChiTiet.Columns["DonGia"].HeaderText = "Đơn Giá";
-            if (dgvChiTiet.Columns["ThanhTien"] != null) dgvChiTiet.Columns["ThanhTien"].HeaderText = "Thành Tiền";
+            int maDH = (int)dgvDonHang.CurrentRow.Cells["MaDonHang"].Value;
+            using var dialog = new frmChiTietDonHangDialog(maDH);
+            dialog.ShowDialog(this);
         }
 
         private void BtnXacNhan_Click(object? sender, EventArgs e)
@@ -263,7 +409,13 @@ namespace QuanLyBanMayVT
             this.ForeColor = Color.White;
             this.Font = new Font("Segoe UI", 9.5F);
 
-            tabControl = new TabControl { Dock = DockStyle.Fill };
+            tabControl = new TabControl
+            {
+                Dock = DockStyle.Fill,
+                Appearance = TabAppearance.FlatButtons,
+                ItemSize = new Size(0, 1),
+                SizeMode = TabSizeMode.Fixed
+            };
 
             // ── Tab 1: Danh sách hóa đơn ─────────────────────────────
             tabDanhSach = new TabPage("🧾 Danh sách hóa đơn");
@@ -469,175 +621,654 @@ namespace QuanLyBanMayVT
     }
 
     /// <summary>Form báo cáo thống kê (Doanh thu, Tồn kho, Sản phẩm bán chạy)</summary>
+    public class ThongKeRow
+    {
+        public int STT { get; set; }
+        public string Ngay { get; set; } = "";
+        public decimal DoanhThu { get; set; }
+        public decimal ChiPhi { get; set; }
+        public decimal LoiNhuan { get; set; }
+        public int SoHoaDon { get; set; }
+    }
+
     public class frmBaoCao : Form
     {
         private readonly string _loaiBaoCao;
-        private TabControl tabControl = null!;
 
-        private DataGridView dgvDoanhThu = null!;
-        private DataGridView dgvTonKho = null!;
-        private DataGridView dgvBanChay = null!;
-        private Label lblTongDoanhThu = null!;
+        // Metric Card Labels
+        private Label lblCardDoanhThu = null!;
+        private Label lblCardChiPhi = null!;
+        private Label lblCardLoiNhuan = null!;
+        private Label lblCardSoHoaDon = null!;
+
+        // Filter Controls
+        private ComboBox cboLoaiThoiGian = null!;
+        private ComboBox cboNam = null!;
+        private ComboBox cboThang = null!;
+        private Button btnXem = null!;
+        private Button btnXuat = null!;
+
+        // Data Grid
+        private DataGridView dgvThongKe = null!;
+
+        private Panel card1 = null!, card2 = null!, card3 = null!, card4 = null!;
+        private FlowLayoutPanel flowCards = null!;
+
+        // Phân trang
+        private int _currentPage = 1;
+        private const int PageSize = 10;
+        private List<ThongKeRow> _fullDataList = new();
+
+        private Panel pnlPagination = null!;
+        private Label lblPageInfo = null!;
+        private Button btnPrev = null!;
+        private Button btnNext = null!;
+        private FlowLayoutPanel pnlPageNumbers = null!;
 
         public frmBaoCao(string loaiBaoCao = "DoanhThu")
         {
             _loaiBaoCao = loaiBaoCao;
             InitUI();
-            LoadBaoCao();
+            LoadThongKeData();
         }
 
         private void InitUI()
         {
-            this.Text = "Báo cáo thống kê";
+            this.Text = "Thống kê";
             this.BackColor = UIStyleHelper.BgMain;
-            this.ForeColor = Color.White;
+            this.ForeColor = Color.FromArgb(17, 24, 39);
             this.Font = new Font("Segoe UI", 9.5F);
 
-            tabControl = new TabControl { Dock = DockStyle.Fill };
-
-            var tabDT = new TabPage("📈 Doanh thu theo tháng");
-            tabDT.BackColor = UIStyleHelper.BgMain;
-
-            lblTongDoanhThu = new Label
+            // ── 1. TOP TITLE ────────────────────────────────────────────
+            var pnlTitle = new Panel
             {
-                Text = "Tổng doanh thu: 0 đ",
                 Dock = DockStyle.Top,
                 Height = 45,
-                Font = new Font("Segoe UI", 12F, FontStyle.Bold),
-                ForeColor = Color.FromArgb(52, 211, 153),
-                TextAlign = ContentAlignment.MiddleLeft,
-                Padding = new Padding(12, 0, 0, 0),
-                BackColor = UIStyleHelper.BgCard
+                Padding = new Padding(18, 10, 18, 0),
+                BackColor = UIStyleHelper.BgMain
+            };
+            var lblTitle = new Label
+            {
+                Text = "Thống kê",
+                Font = new Font("Segoe UI", 14F, FontStyle.Bold),
+                ForeColor = Color.FromArgb(17, 24, 39),
+                Dock = DockStyle.Left,
+                AutoSize = true
+            };
+            pnlTitle.Controls.Add(lblTitle);
+
+            // ── 2. METRIC KPI CARDS (4 CARDS) ───────────────────────────
+            var pnlCardsContainer = new Panel
+            {
+                Dock = DockStyle.Top,
+                Height = 92,
+                Padding = new Padding(18, 5, 18, 5),
+                BackColor = UIStyleHelper.BgMain
             };
 
-            dgvDoanhThu = CreateDgv();
-            tabDT.Controls.Add(dgvDoanhThu);
-            tabDT.Controls.Add(lblTongDoanhThu);
+            flowCards = new FlowLayoutPanel
+            {
+                Dock = DockStyle.Fill,
+                FlowDirection = FlowDirection.LeftToRight,
+                WrapContents = false,
+                BackColor = UIStyleHelper.BgMain
+            };
 
-            var tabTK = new TabPage("📊 Cảnh báo tồn kho");
-            tabTK.BackColor = UIStyleHelper.BgMain;
-            dgvTonKho = CreateDgv();
-            tabTK.Controls.Add(dgvTonKho);
+            card1 = CreateMetricCard("Doanh thu", out lblCardDoanhThu, Color.FromArgb(37, 99, 235), Color.FromArgb(37, 99, 235));
+            card2 = CreateMetricCard("Chi phí", out lblCardChiPhi, Color.FromArgb(225, 29, 72), Color.FromArgb(225, 29, 72));
+            card3 = CreateMetricCard("Lợi nhuận", out lblCardLoiNhuan, Color.FromArgb(5, 150, 105), Color.FromArgb(225, 29, 72));
+            card4 = CreateMetricCard("Số hóa đơn", out lblCardSoHoaDon, Color.FromArgb(124, 58, 237), Color.FromArgb(124, 58, 237));
 
-            var tabBC = new TabPage("🔥 Sản phẩm bán chạy");
-            tabBC.BackColor = UIStyleHelper.BgMain;
-            dgvBanChay = CreateDgv();
-            tabBC.Controls.Add(dgvBanChay);
+            flowCards.Controls.Add(card1);
+            flowCards.Controls.Add(card2);
+            flowCards.Controls.Add(card3);
+            flowCards.Controls.Add(card4);
 
-            tabControl.TabPages.Add(tabDT);
-            tabControl.TabPages.Add(tabTK);
-            tabControl.TabPages.Add(tabBC);
+            pnlCardsContainer.Controls.Add(flowCards);
+            pnlCardsContainer.Resize += (s, e) => RepositionCards();
 
-            if (_loaiBaoCao == "TonKho") tabControl.SelectedTab = tabTK;
-            else if (_loaiBaoCao == "BanChay") tabControl.SelectedTab = tabBC;
+            // ── 3. FILTER BAR (Thời gian, Năm, Tháng) ─────────────────
+            var pnlFilter = new Panel
+            {
+                Dock = DockStyle.Top,
+                Height = 55,
+                Padding = new Padding(18, 10, 18, 10),
+                BackColor = UIStyleHelper.BgMain
+            };
 
-            this.Controls.Add(tabControl);
-        }
+            var flowFilter = new FlowLayoutPanel
+            {
+                Dock = DockStyle.Fill,
+                FlowDirection = FlowDirection.LeftToRight,
+                WrapContents = false,
+                BackColor = UIStyleHelper.BgMain
+            };
 
-        private DataGridView CreateDgv()
-        {
-            var dgv = new DataGridView
+            var lblTG = new Label
+            {
+                Text = "Thời gian:",
+                AutoSize = true,
+                Margin = new Padding(0, 6, 8, 0),
+                Font = new Font("Segoe UI", 9.5F),
+                ForeColor = Color.FromArgb(71, 85, 105)
+            };
+            cboLoaiThoiGian = new ComboBox { Width = 110, DropDownStyle = ComboBoxStyle.DropDownList, Margin = new Padding(0, 2, 20, 0) };
+            UIStyleHelper.StyleComboBox(cboLoaiThoiGian);
+            cboLoaiThoiGian.Items.AddRange(new object[] { "Tháng", "Năm", "Tất cả" });
+            cboLoaiThoiGian.SelectedIndex = 0;
+
+            var lblNam = new Label
+            {
+                Text = "Năm:",
+                AutoSize = true,
+                Margin = new Padding(0, 6, 8, 0),
+                Font = new Font("Segoe UI", 9.5F),
+                ForeColor = Color.FromArgb(71, 85, 105)
+            };
+            cboNam = new ComboBox { Width = 100, DropDownStyle = ComboBoxStyle.DropDownList, Margin = new Padding(0, 2, 20, 0) };
+            UIStyleHelper.StyleComboBox(cboNam);
+            int curYear = DateTime.Now.Year;
+            for (int y = curYear; y >= curYear - 5; y--) cboNam.Items.Add(y);
+            cboNam.SelectedIndex = 0;
+
+            var lblThang = new Label
+            {
+                Text = "Tháng:",
+                AutoSize = true,
+                Margin = new Padding(0, 6, 8, 0),
+                Font = new Font("Segoe UI", 9.5F),
+                ForeColor = Color.FromArgb(71, 85, 105)
+            };
+            cboThang = new ComboBox { Width = 100, DropDownStyle = ComboBoxStyle.DropDownList, Margin = new Padding(0, 2, 30, 0) };
+            UIStyleHelper.StyleComboBox(cboThang);
+            cboThang.Items.Add("Tất cả");
+            for (int m = 1; m <= 12; m++) cboThang.Items.Add(m.ToString());
+            cboThang.SelectedIndex = DateTime.Now.Month;
+
+            btnXem = new Button
+            {
+                Text = "Xem",
+                Size = new Size(95, 34),
+                Margin = new Padding(0, 0, 15, 0),
+                BackColor = Color.FromArgb(2, 132, 199),
+                ForeColor = Color.White,
+                FlatStyle = FlatStyle.Flat,
+                Font = new Font("Segoe UI", 9.5F, FontStyle.Bold),
+                Cursor = Cursors.Hand
+            };
+            btnXem.FlatAppearance.BorderSize = 0;
+            btnXem.Click += (s, e) => LoadThongKeData();
+
+            btnXuat = new Button
+            {
+                Text = "⬇ Xuất báo cáo",
+                Size = new Size(135, 34),
+                Margin = new Padding(0, 0, 0, 0),
+                BackColor = Color.FromArgb(16, 185, 129),
+                ForeColor = Color.White,
+                FlatStyle = FlatStyle.Flat,
+                Font = new Font("Segoe UI", 9.5F, FontStyle.Bold),
+                Cursor = Cursors.Hand
+            };
+            btnXuat.FlatAppearance.BorderSize = 0;
+            btnXuat.Click += (s, e) => XuatBaoCaoCsv();
+
+            flowFilter.Controls.Add(lblTG);
+            flowFilter.Controls.Add(cboLoaiThoiGian);
+            flowFilter.Controls.Add(lblNam);
+            flowFilter.Controls.Add(cboNam);
+            flowFilter.Controls.Add(lblThang);
+            flowFilter.Controls.Add(cboThang);
+            flowFilter.Controls.Add(btnXem);
+            flowFilter.Controls.Add(btnXuat);
+
+            pnlFilter.Controls.Add(flowFilter);
+
+            // ── 4. DATA GRID VIEW (Dark Slate Header like reference UI) ─
+            var pnlGridContainer = new Panel
+            {
+                Dock = DockStyle.Fill,
+                Padding = new Padding(18, 5, 18, 18),
+                BackColor = UIStyleHelper.BgMain
+            };
+
+            dgvThongKe = new DataGridView
             {
                 Dock = DockStyle.Fill,
                 AutoSizeColumnsMode = DataGridViewAutoSizeColumnsMode.Fill,
                 SelectionMode = DataGridViewSelectionMode.FullRowSelect,
+                MultiSelect = false,
                 ReadOnly = true,
-                AllowUserToAddRows = false
+                AllowUserToAddRows = false,
+                EnableHeadersVisualStyles = false
             };
-            UIStyleHelper.StyleDataGridView(dgv);
-            return dgv;
+            
+            // Header màu xám đen mờ đậm `#334155` chữ trắng
+            dgvThongKe.ColumnHeadersDefaultCellStyle.BackColor = Color.FromArgb(51, 65, 85);
+            dgvThongKe.ColumnHeadersDefaultCellStyle.ForeColor = Color.White;
+            dgvThongKe.ColumnHeadersDefaultCellStyle.Font = new Font("Segoe UI", 9.5F, FontStyle.Bold);
+            dgvThongKe.ColumnHeadersHeight = 42;
+            dgvThongKe.ColumnHeadersHeightSizeMode = DataGridViewColumnHeadersHeightSizeMode.DisableResizing;
+
+            dgvThongKe.DefaultCellStyle.BackColor = Color.White;
+            dgvThongKe.DefaultCellStyle.ForeColor = Color.FromArgb(30, 41, 59);
+            dgvThongKe.DefaultCellStyle.SelectionBackColor = Color.FromArgb(239, 246, 255);
+            dgvThongKe.DefaultCellStyle.SelectionForeColor = Color.FromArgb(30, 41, 59);
+            dgvThongKe.DefaultCellStyle.Font = new Font("Segoe UI", 9.5F);
+
+            dgvThongKe.AlternatingRowsDefaultCellStyle.BackColor = Color.FromArgb(248, 250, 252);
+
+            dgvThongKe.CellFormatting += DgvThongKe_CellFormatting;
+
+            pnlGridContainer.Controls.Add(dgvThongKe);
+
+            // ── 5. PAGINATION BAR ─────────────────────────────────────────
+            pnlPagination = new Panel
+            {
+                Dock = DockStyle.Bottom,
+                Height = 52,
+                BackColor = UIStyleHelper.BgCard,
+                Padding = new Padding(16, 0, 16, 0)
+            };
+            pnlPagination.Paint += (s, e) =>
+                e.Graphics.DrawLine(new Pen(Color.FromArgb(226, 232, 240), 1), 0, 0, pnlPagination.Width, 0);
+
+            lblPageInfo = new Label
+            {
+                AutoSize = true,
+                Font = new Font("Segoe UI", 9F, FontStyle.Bold),
+                ForeColor = Color.FromArgb(100, 116, 139),
+                Location = new Point(16, 17)
+            };
+
+            btnPrev = new Button
+            {
+                Text = "◀",
+                Size = new Size(36, 32),
+                FlatStyle = FlatStyle.Flat,
+                Font = new Font("Segoe UI", 9F, FontStyle.Bold),
+                Cursor = Cursors.Hand
+            };
+            btnPrev.Click += (s, e) => { if (_currentPage > 1) { _currentPage--; RenderPage(); } };
+
+            btnNext = new Button
+            {
+                Text = "▶",
+                Size = new Size(36, 32),
+                FlatStyle = FlatStyle.Flat,
+                Font = new Font("Segoe UI", 9F, FontStyle.Bold),
+                Cursor = Cursors.Hand
+            };
+            btnNext.Click += (s, e) => {
+                int totalPages = _fullDataList.Count == 0 ? 1 : (int)Math.Ceiling((double)_fullDataList.Count / PageSize);
+                if (_currentPage < totalPages) { _currentPage++; RenderPage(); }
+            };
+
+            pnlPageNumbers = new FlowLayoutPanel
+            {
+                AutoSize = true,
+                AutoSizeMode = AutoSizeMode.GrowAndShrink,
+                FlowDirection = FlowDirection.LeftToRight,
+                WrapContents = false,
+                BackColor = Color.Transparent
+            };
+
+            pnlPagination.Controls.Add(lblPageInfo);
+            pnlPagination.Controls.Add(btnPrev);
+            pnlPagination.Controls.Add(pnlPageNumbers);
+            pnlPagination.Controls.Add(btnNext);
+            pnlPagination.Resize += (s, e) => RepositionPaginationControls();
+
+            this.Controls.Add(pnlGridContainer);
+            this.Controls.Add(pnlPagination);
+            this.Controls.Add(pnlFilter);
+            this.Controls.Add(pnlCardsContainer);
+            this.Controls.Add(pnlTitle);
         }
 
-        private void LoadBaoCao()
+        private Panel CreateMetricCard(string title, out Label lblValue, Color accentColor, Color textColor)
         {
-            LoadDoanhThu();
-            LoadTonKho();
-            LoadBanChay();
+            var card = new Panel
+            {
+                Height = 80,
+                Margin = new Padding(0, 0, 16, 0),
+                BackColor = Color.White,
+                Padding = new Padding(16, 10, 16, 10)
+            };
+            card.Paint += (s, e) =>
+            {
+                e.Graphics.DrawRectangle(new Pen(Color.FromArgb(226, 232, 240), 1), 0, 0, card.Width - 1, card.Height - 1);
+                using var b = new SolidBrush(accentColor);
+                e.Graphics.FillRectangle(b, 0, 0, 5, card.Height);
+            };
+
+            var lblTitle = new Label
+            {
+                Text = title,
+                Dock = DockStyle.Top,
+                Height = 22,
+                Font = new Font("Segoe UI", 9.5F, FontStyle.Bold),
+                ForeColor = Color.FromArgb(100, 116, 139),
+                TextAlign = ContentAlignment.MiddleLeft
+            };
+
+            lblValue = new Label
+            {
+                Text = "0 đ",
+                Dock = DockStyle.Fill,
+                Font = new Font("Segoe UI", 13F, FontStyle.Bold),
+                ForeColor = textColor,
+                TextAlign = ContentAlignment.MiddleLeft
+            };
+
+            card.Controls.Add(lblValue);
+            card.Controls.Add(lblTitle);
+            return card;
         }
 
-        private void LoadDoanhThu()
+        private void RepositionCards()
+        {
+            if (flowCards == null) return;
+            int totalW = flowCards.ClientSize.Width;
+            int cardW = (totalW - 3 * 16) / 4;
+            if (cardW < 140) cardW = 140;
+
+            card1.Width = cardW;
+            card2.Width = cardW;
+            card3.Width = cardW;
+            card4.Width = cardW;
+        }
+
+        private void RepositionPaginationControls()
+        {
+            if (pnlPagination == null) return;
+            int rightX = pnlPagination.ClientSize.Width - 16;
+            btnNext.Left = rightX - btnNext.Width;
+            btnNext.Top = 10;
+
+            pnlPageNumbers.Left = btnNext.Left - pnlPageNumbers.Width - 6;
+            pnlPageNumbers.Top = 10;
+
+            btnPrev.Left = pnlPageNumbers.Left - btnPrev.Width - 6;
+            btnPrev.Top = 10;
+        }
+
+        private void LoadThongKeData()
         {
             try
             {
+                int nam = cboNam.SelectedItem is int n ? n : DateTime.Now.Year;
+                int thang = cboThang.SelectedIndex; // 0 = Tất cả
+                string loaiTG = cboLoaiThoiGian.SelectedItem?.ToString() ?? "Tháng";
+
                 using var conn = DatabaseHelper.GetConnection();
-                const string sql = @"
-                    SELECT
-                        YEAR(NgayThanhToan) AS Nam,
-                        MONTH(NgayThanhToan) AS Thang,
-                        COUNT(1) AS SoHoaDon,
-                        SUM(TongTien) AS DoanhThu
+
+                // 1. Doanh thu theo Ngày từ HoaDon
+                var dictDoanhThu = new Dictionary<DateTime, (decimal Revenue, int Invoices)>();
+                const string sqlHD = @"
+                    SELECT CAST(NgayThanhToan AS DATE) AS Ngay,
+                           SUM(TongTien) AS DoanhThu,
+                           COUNT(1) AS SoHoaDon
                     FROM HoaDon
                     WHERE TrangThaiThanhToan = 'Da thanh toan'
-                    GROUP BY YEAR(NgayThanhToan), MONTH(NgayThanhToan)
-                    ORDER BY Nam DESC, Thang DESC";
-                using var cmd = new SqlCommand(sql, conn);
-                using var da = new SqlDataAdapter(cmd);
-                var dt = new DataTable();
-                da.Fill(dt);
+                      AND YEAR(NgayThanhToan) = @Nam
+                      AND (@Thang = 0 OR MONTH(NgayThanhToan) = @Thang)
+                    GROUP BY CAST(NgayThanhToan AS DATE)";
 
-                dgvDoanhThu.DataSource = dt;
-
-                decimal tong = 0;
-                foreach (DataRow r in dt.Rows)
+                using (var cmd = new SqlCommand(sqlHD, conn))
                 {
-                    if (r["DoanhThu"] != DBNull.Value)
-                        tong += Convert.ToDecimal(r["DoanhThu"]);
+                    cmd.Parameters.AddWithValue("@Nam", nam);
+                    cmd.Parameters.AddWithValue("@Thang", thang);
+                    using var r = cmd.ExecuteReader();
+                    while (r.Read())
+                    {
+                        var dt = (DateTime)r["Ngay"];
+                        decimal rev = r["DoanhThu"] != DBNull.Value ? Convert.ToDecimal(r["DoanhThu"]) : 0;
+                        int inv = Convert.ToInt32(r["SoHoaDon"]);
+                        dictDoanhThu[dt] = (rev, inv);
+                    }
                 }
-                lblTongDoanhThu.Text = $"💰 TỔNG DOANH THU TOÀN BỘ: {tong:N0} đ";
+
+                // 2. Chi phí nhập hàng từ PhieuNhapHang + ChiTietPhieuNhap
+                var dictChiPhi = new Dictionary<DateTime, decimal>();
+                const string sqlPN = @"
+                    SELECT CAST(pn.NgayNhap AS DATE) AS Ngay,
+                           SUM(ct.SoLuongNhap * ct.DonGiaNhap) AS ChiPhi
+                    FROM PhieuNhapHang pn
+                    INNER JOIN ChiTietPhieuNhap ct ON pn.MaPhieuNhap = ct.MaPhieuNhap
+                    WHERE pn.TrangThai = 'Da nhap kho'
+                      AND YEAR(pn.NgayNhap) = @Nam
+                      AND (@Thang = 0 OR MONTH(pn.NgayNhap) = @Thang)
+                    GROUP BY CAST(pn.NgayNhap AS DATE)";
+
+                using (var cmd = new SqlCommand(sqlPN, conn))
+                {
+                    cmd.Parameters.AddWithValue("@Nam", nam);
+                    cmd.Parameters.AddWithValue("@Thang", thang);
+                    using var r = cmd.ExecuteReader();
+                    while (r.Read())
+                    {
+                        var dt = (DateTime)r["Ngay"];
+                        decimal cost = r["ChiPhi"] != DBNull.Value ? Convert.ToDecimal(r["ChiPhi"]) : 0;
+                        dictChiPhi[dt] = cost;
+                    }
+                }
+
+                // 3. Tổng hợp số liệu theo dòng
+                var dataList = new List<ThongKeRow>();
+
+                if (loaiTG == "Tháng" && thang > 0)
+                {
+                    int daysInMonth = DateTime.DaysInMonth(nam, thang);
+                    for (int day = 1; day <= daysInMonth; day++)
+                    {
+                        var date = new DateTime(nam, thang, day);
+                        dictDoanhThu.TryGetValue(date, out var revData);
+                        dictChiPhi.TryGetValue(date, out decimal cost);
+
+                        decimal rev = revData.Revenue;
+                        int inv = revData.Invoices;
+                        decimal profit = rev - cost;
+
+                        dataList.Add(new ThongKeRow
+                        {
+                            STT = day,
+                            Ngay = date.ToString("dd/MM/yyyy"),
+                            DoanhThu = rev,
+                            ChiPhi = cost,
+                            LoiNhuan = profit,
+                            SoHoaDon = inv
+                        });
+                    }
+                }
+                else
+                {
+                    var allDates = dictDoanhThu.Keys.Union(dictChiPhi.Keys).OrderBy(d => d).ToList();
+                    int stt = 1;
+                    foreach (var date in allDates)
+                    {
+                        dictDoanhThu.TryGetValue(date, out var revData);
+                        dictChiPhi.TryGetValue(date, out decimal cost);
+
+                        decimal rev = revData.Revenue;
+                        int inv = revData.Invoices;
+                        decimal profit = rev - cost;
+
+                        dataList.Add(new ThongKeRow
+                        {
+                            STT = stt++,
+                            Ngay = date.ToString("dd/MM/yyyy"),
+                            DoanhThu = rev,
+                            ChiPhi = cost,
+                            LoiNhuan = profit,
+                            SoHoaDon = inv
+                        });
+                    }
+                }
+
+                // 4. Cập nhật 4 Metric Cards KPI
+                decimal totalRev = dataList.Sum(x => x.DoanhThu);
+                decimal totalCost = dataList.Sum(x => x.ChiPhi);
+                decimal totalProfit = totalRev - totalCost;
+                int totalInvoices = dataList.Sum(x => x.SoHoaDon);
+
+                lblCardDoanhThu.Text = $"{totalRev:N0} đ";
+                lblCardChiPhi.Text = $"{totalCost:N0} đ";
+
+                lblCardLoiNhuan.Text = (totalProfit >= 0 ? "" : "-") + Math.Abs(totalProfit).ToString("N0") + " đ";
+                lblCardLoiNhuan.ForeColor = totalProfit >= 0 ? Color.FromArgb(5, 150, 105) : Color.FromArgb(225, 29, 72);
+
+                lblCardSoHoaDon.Text = totalInvoices.ToString();
+
+                // 5. Cập nhật dữ liệu phân trang
+                _fullDataList = dataList;
+                _currentPage = 1;
+                RenderPage();
             }
-            catch { }
+            catch (Exception ex)
+            {
+                MessageBox.Show($"Lỗi tải dữ liệu thống kê:\n{ex.Message}", "Lỗi", MessageBoxButtons.OK, MessageBoxIcon.Error);
+            }
         }
 
-        private void LoadTonKho()
+        private void RenderPage()
         {
-            var listCanNhap = new SanPhamDAO().GetCanNhap();
-            dgvTonKho.DataSource = listCanNhap.Select(p => new
+            int totalCount = _fullDataList.Count;
+            int totalPages = totalCount == 0 ? 1 : (int)Math.Ceiling((double)totalCount / PageSize);
+
+            if (_currentPage > totalPages) _currentPage = totalPages;
+            if (_currentPage < 1) _currentPage = 1;
+
+            var pageItems = _fullDataList
+                .Skip((_currentPage - 1) * PageSize)
+                .Take(PageSize)
+                .ToList();
+
+            dgvThongKe.DataSource = pageItems.Select(x => new
             {
-                p.MaSanPham,
-                p.TenSanPham,
-                p.TenDanhMuc,
-                p.SoLuongTon,
-                p.MucTonToiThieu,
-                CanNhapThem = p.MucTonToiThieu - p.SoLuongTon,
-                p.TrangThaiDisplay
+                x.STT,
+                x.Ngay,
+                DoanhThu = x.DoanhThu.ToString("N0") + " đ",
+                ChiPhi = x.ChiPhi.ToString("N0") + " đ",
+                LoiNhuan = (x.LoiNhuan >= 0 ? "" : "-") + Math.Abs(x.LoiNhuan).ToString("N0") + " đ",
+                x.SoHoaDon
             }).ToList();
 
-            if (dgvTonKho.Columns["MaSanPham"] != null) dgvTonKho.Columns["MaSanPham"].HeaderText = "Mã SP";
-            if (dgvTonKho.Columns["TenSanPham"] != null) dgvTonKho.Columns["TenSanPham"].HeaderText = "Tên Sản Phẩm";
-            if (dgvTonKho.Columns["TenDanhMuc"] != null) dgvTonKho.Columns["TenDanhMuc"].HeaderText = "Danh Mục";
-            if (dgvTonKho.Columns["SoLuongTon"] != null) dgvTonKho.Columns["SoLuongTon"].HeaderText = "Tồn Hiện Tại";
-            if (dgvTonKho.Columns["MucTonToiThieu"] != null) dgvTonKho.Columns["MucTonToiThieu"].HeaderText = "Mức Tối Thiểu";
-            if (dgvTonKho.Columns["CanNhapThem"] != null) dgvTonKho.Columns["CanNhapThem"].HeaderText = "Cần Nhập Ít Nhất";
-            if (dgvTonKho.Columns["TrangThaiDisplay"] != null) dgvTonKho.Columns["TrangThaiDisplay"].HeaderText = "Trạng Thái";
+            if (dgvThongKe.Columns["STT"] != null) dgvThongKe.Columns["STT"].HeaderText = "STT";
+            if (dgvThongKe.Columns["Ngay"] != null) dgvThongKe.Columns["Ngay"].HeaderText = "Ngày";
+            if (dgvThongKe.Columns["DoanhThu"] != null) dgvThongKe.Columns["DoanhThu"].HeaderText = "Doanh thu";
+            if (dgvThongKe.Columns["ChiPhi"] != null) dgvThongKe.Columns["ChiPhi"].HeaderText = "Chi phí";
+            if (dgvThongKe.Columns["LoiNhuan"] != null) dgvThongKe.Columns["LoiNhuan"].HeaderText = "Lợi nhuận";
+            if (dgvThongKe.Columns["SoHoaDon"] != null) dgvThongKe.Columns["SoHoaDon"].HeaderText = "Số hóa đơn";
+
+            int startIdx = totalCount == 0 ? 0 : (_currentPage - 1) * PageSize + 1;
+            int endIdx = Math.Min(_currentPage * PageSize, totalCount);
+            lblPageInfo.Text = $"Hiển thị {startIdx} - {endIdx} / Tổng {totalCount} ngày (Trang {_currentPage}/{totalPages})";
+
+            btnPrev.Enabled = _currentPage > 1;
+            btnNext.Enabled = _currentPage < totalPages;
+
+            btnPrev.BackColor = btnPrev.Enabled ? Color.White : Color.FromArgb(241, 245, 249);
+            btnPrev.ForeColor = btnPrev.Enabled ? Color.FromArgb(30, 41, 59) : Color.FromArgb(148, 163, 184);
+            btnPrev.FlatAppearance.BorderColor = btnPrev.Enabled ? Color.FromArgb(203, 213, 225) : Color.FromArgb(226, 232, 240);
+            btnPrev.FlatAppearance.BorderSize = 1;
+
+            btnNext.BackColor = btnNext.Enabled ? Color.White : Color.FromArgb(241, 245, 249);
+            btnNext.ForeColor = btnNext.Enabled ? Color.FromArgb(30, 41, 59) : Color.FromArgb(148, 163, 184);
+            btnNext.FlatAppearance.BorderColor = btnNext.Enabled ? Color.FromArgb(203, 213, 225) : Color.FromArgb(226, 232, 240);
+            btnNext.FlatAppearance.BorderSize = 1;
+
+            pnlPageNumbers.Controls.Clear();
+            for (int i = 1; i <= totalPages; i++)
+            {
+                int pageNum = i;
+                var btnNum = new Button
+                {
+                    Text = pageNum.ToString(),
+                    Size = new Size(36, 32),
+                    Margin = new Padding(3, 0, 3, 0),
+                    FlatStyle = FlatStyle.Flat,
+                    Font = new Font("Segoe UI", 9F, FontStyle.Bold),
+                    Cursor = Cursors.Hand
+                };
+
+                if (pageNum == _currentPage)
+                {
+                    btnNum.BackColor = UIStyleHelper.PrimaryBlue;
+                    btnNum.ForeColor = Color.White;
+                    btnNum.FlatAppearance.BorderColor = UIStyleHelper.PrimaryBlue;
+                    btnNum.FlatAppearance.BorderSize = 1;
+                }
+                else
+                {
+                    btnNum.BackColor = Color.White;
+                    btnNum.ForeColor = Color.FromArgb(30, 41, 59);
+                    btnNum.FlatAppearance.BorderColor = Color.FromArgb(203, 213, 225);
+                    btnNum.FlatAppearance.BorderSize = 1;
+                }
+
+                btnNum.Click += (s, e) =>
+                {
+                    _currentPage = pageNum;
+                    RenderPage();
+                };
+                pnlPageNumbers.Controls.Add(btnNum);
+            }
+
+            RepositionPaginationControls();
         }
 
-        private void LoadBanChay()
+        private void DgvThongKe_CellFormatting(object? sender, DataGridViewCellFormattingEventArgs e)
         {
-            try
+            if (e.RowIndex >= 0 && dgvThongKe.Columns[e.ColumnIndex].Name == "LoiNhuan" && e.Value != null)
             {
-                using var conn = DatabaseHelper.GetConnection();
-                const string sql = @"
-                    SELECT TOP 10
-                        sp.MaSanPham,
-                        sp.TenSanPham,
-                        dm.TenDanhMuc,
-                        SUM(ct.SoLuong) AS TongDaBan,
-                        SUM(ct.ThanhTien) AS TongDoanhThu
-                    FROM ChiTietDonHang ct
-                    INNER JOIN DonHang dh ON ct.MaDonHang = dh.MaDonHang
-                    INNER JOIN SanPham sp ON ct.MaSanPham = sp.MaSanPham
-                    LEFT JOIN DanhMucSanPham dm ON sp.MaDanhMuc = dm.MaDanhMuc
-                    WHERE dh.TrangThaiDonHang IN ('Da xac nhan', 'Hoan tat')
-                    GROUP BY sp.MaSanPham, sp.TenSanPham, dm.TenDanhMuc
-                    ORDER BY SUM(ct.SoLuong) DESC";
-                using var cmd = new SqlCommand(sql, conn);
-                using var da = new SqlDataAdapter(cmd);
-                var dt = new DataTable();
-                da.Fill(dt);
-
-                dgvBanChay.DataSource = dt;
+                string strVal = e.Value.ToString() ?? "";
+                if (strVal.StartsWith("-"))
+                {
+                    e.CellStyle.ForeColor = Color.FromArgb(225, 29, 72); // Đỏ cho Lợi nhuận âm
+                    e.CellStyle.Font = new Font("Segoe UI", 9.5F, FontStyle.Bold);
+                }
+                else
+                {
+                    e.CellStyle.ForeColor = Color.FromArgb(5, 150, 105); // Xanh cho Lợi nhuận dương
+                    e.CellStyle.Font = new Font("Segoe UI", 9.5F, FontStyle.Bold);
+                }
             }
-            catch { }
+        }
+
+        private void XuatBaoCaoCsv()
+        {
+            using var sfd = new SaveFileDialog
+            {
+                Filter = "File CSV (*.csv)|*.csv",
+                FileName = $"ThongKe_BaoCao_{DateTime.Now:yyyyMMdd}.csv"
+            };
+
+            if (sfd.ShowDialog() == DialogResult.OK)
+            {
+                try
+                {
+                    var sb = new System.Text.StringBuilder();
+                    sb.AppendLine("STT,Ngay,DoanhThu,ChiPhi,LoiNhuan,SoHoaDon");
+                    foreach (DataGridViewRow row in dgvThongKe.Rows)
+                    {
+                        if (row.IsNewRow) continue;
+                        string stt = row.Cells["STT"].Value?.ToString() ?? "";
+                        string ngay = row.Cells["Ngay"].Value?.ToString() ?? "";
+                        string dt = row.Cells["DoanhThu"].Value?.ToString()?.Replace(" đ", "").Replace(",", "") ?? "0";
+                        string cp = row.Cells["ChiPhi"].Value?.ToString()?.Replace(" đ", "").Replace(",", "") ?? "0";
+                        string ln = row.Cells["LoiNhuan"].Value?.ToString()?.Replace(" đ", "").Replace(",", "") ?? "0";
+                        string shd = row.Cells["SoHoaDon"].Value?.ToString() ?? "0";
+                        sb.AppendLine($"{stt},{ngay},{dt},{cp},{ln},{shd}");
+                    }
+                    System.IO.File.WriteAllText(sfd.FileName, sb.ToString(), System.Text.Encoding.UTF8);
+                    MessageBox.Show("Đã xuất báo cáo thống kê thành công!", "Thông báo", MessageBoxButtons.OK, MessageBoxIcon.Information);
+                }
+                catch (Exception ex)
+                {
+                    MessageBox.Show($"Lỗi xuất báo cáo:\n{ex.Message}", "Lỗi", MessageBoxButtons.OK, MessageBoxIcon.Error);
+                }
+            }
         }
     }
 }

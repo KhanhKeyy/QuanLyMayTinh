@@ -44,36 +44,28 @@ namespace QuanLyBanMayVT
                 HienThiTrangChu();
             };
 
-            // Hàng hoá — accordion with sub-items
-            btnHangHoa.Click += (s, e) => ToggleAccordion(btnHangHoa, new[]
+            // Hàng hoá — direct (no accordion dropdown)
+            btnHangHoa.Click += (s, e) =>
             {
-                ("Xem danh sách SP", (Action)(() => { SetActiveSidebarBtn(btnHangHoa, isParent:false); MoFormTrong(new frmSanPham()); })),
-                ("Thêm sản phẩm",   (Action)(() => { SetActiveSidebarBtn(btnHangHoa, isParent:false); MoFormTrong(new frmSanPham(cheBoDuyet: true)); }))
-            });
+                CloseAccordion();
+                SetActiveSidebarBtn(btnHangHoa, isParent: true);
+                MoFormTrong(new frmSanPham());
+            };
 
-            // Nhập hàng — accordion
+            // Nhập hàng — accordion with distinct tabs
             btnNhapHang.Click += (s, e) => ToggleAccordion(btnNhapHang, new[]
             {
-                ("Lập phiếu nhập", (Action)(() => { SetActiveSidebarBtn(btnNhapHang, isParent:false); MoFormTrong(new frmNhapHang()); })),
-                ("Danh sách phiếu",(Action)(() => { SetActiveSidebarBtn(btnNhapHang, isParent:false); MoFormTrong(new frmNhapHang()); }))
+                ("Lập phiếu nhập", (Action)(() => { SetActiveSidebarBtn(btnNhapHang, isParent:false); MoFormTrong(new frmNhapHang(defaultTabIndex: 0)); })),
+                ("Danh sách phiếu",(Action)(() => { SetActiveSidebarBtn(btnNhapHang, isParent:false); MoFormTrong(new frmNhapHang(defaultTabIndex: 1)); }))
             });
 
-            // Đơn hàng — accordion
-            btnDonHang.Click += (s, e) => ToggleAccordion(btnDonHang, new[]
+            // Đơn hàng — direct (no accordion dropdown)
+            btnDonHang.Click += (s, e) =>
             {
-                ("Xem tất cả đơn",   (Action)(() => { SetActiveSidebarBtn(btnDonHang, isParent:false); MoFormTrong(new frmDonHang()); })),
-                ("Xác nhận đơn hàng",(Action)(() =>
-                {
-                    if (!UserSession.IsNVBanHang && !UserSession.IsQuanLy)
-                    {
-                        MessageBox.Show("Bạn không có quyền xác nhận đơn hàng.",
-                            "Từ chối truy cập", MessageBoxButtons.OK, MessageBoxIcon.Warning);
-                        return;
-                    }
-                    SetActiveSidebarBtn(btnDonHang, isParent:false);
-                    MoFormTrong(new frmDonHang(cheBoDuyet: true));
-                }))
-            });
+                CloseAccordion();
+                SetActiveSidebarBtn(btnDonHang, isParent: true);
+                MoFormTrong(new frmDonHang(cheBoDuyet: true));
+            };
 
             // Hóa đơn — accordion
             btnHoaDon.Click += (s, e) => ToggleAccordion(btnHoaDon, new[]
@@ -82,12 +74,13 @@ namespace QuanLyBanMayVT
                 ("Lập hóa đơn mới",   (Action)(() => { SetActiveSidebarBtn(btnHoaDon, isParent:false); MoFormTrong(new frmHoaDon(defaultTabIndex: 1)); }))
             });
 
-            // Tồn kho — direct
-            btnTonKho.Click += (s, e) => ToggleAccordion(btnTonKho, new[]
+            // Tồn kho — direct (no accordion dropdown)
+            btnTonKho.Click += (s, e) =>
             {
-                ("Xem tồn kho",   (Action)(() => { SetActiveSidebarBtn(btnTonKho, isParent:false); MoFormTrong(new frmTonKho()); })),
-                ("Cập nhật tồn kho",(Action)(() => { SetActiveSidebarBtn(btnTonKho, isParent:false); MoFormTrong(new frmTonKho()); }))
-            });
+                CloseAccordion();
+                SetActiveSidebarBtn(btnTonKho, isParent: true);
+                MoFormTrong(new frmTonKho());
+            };
 
             // Báo cáo — accordion
             btnBaoCao.Click += (s, e) => ToggleAccordion(btnBaoCao, new[]
@@ -139,7 +132,7 @@ namespace QuanLyBanMayVT
             var accordion = new Panel
             {
                 BackColor = Color.FromArgb(248, 250, 252),
-                Size      = new Size(240, subH),
+                Size      = new Size(260, subH),
                 Location  = new Point(0, parentBtn.Bottom)
             };
 
@@ -149,7 +142,7 @@ namespace QuanLyBanMayVT
                 var subBtn = new Button
                 {
                     Text      = "   › " + label,
-                    Size      = new Size(240, 36),
+                    Size      = new Size(260, 36),
                     Location  = new Point(0, i * 36),
                     Font      = new Font("Segoe UI", 9F),
                     ForeColor = Color.FromArgb(75, 85, 99),
@@ -258,16 +251,16 @@ namespace QuanLyBanMayVT
 
             this.Text = $"Quản Lý Bán Máy Vi Tính – {UserSession.DisplayName}";
 
-            lblTenNguoiDung.Font     = new Font("Segoe UI", 11F, FontStyle.Bold);
+            lblTenNguoiDung.Font     = new Font("Segoe UI", 10.5F, FontStyle.Bold);
             lblTenNguoiDung.Text     = $"👤 {UserSession.DisplayName}";
             lblTenNguoiDung.AutoSize = true;
-            lblTenNguoiDung.Location = new Point(12, 18);
+            lblTenNguoiDung.Location = new Point(14, 13);
 
-            lblVaiTro.Font     = new Font("Segoe UI", 9F, FontStyle.Bold);
+            lblVaiTro.Font     = new Font("Segoe UI", 8.5F, FontStyle.Bold);
             lblVaiTro.Text     = vaiTroText;
             lblVaiTro.AutoSize = true;
             lblVaiTro.Padding  = new Padding(8, 3, 8, 3);
-            lblVaiTro.Location = new Point(lblTenNguoiDung.Right + 8, 17);
+            lblVaiTro.Location = new Point(lblTenNguoiDung.Right + 8, 12);
 
             lblVaiTro.BackColor = UserSession.IsQuanLy    ? Color.FromArgb(124, 58, 237)
                                 : UserSession.IsKeToan    ? Color.FromArgb(5, 150, 105)

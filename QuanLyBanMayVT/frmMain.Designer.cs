@@ -79,10 +79,10 @@ namespace QuanLyBanMayVT
             this.SuspendLayout();
 
             // ================================================================
-            // SIDEBAR 240px wide
+            // SIDEBAR 260px wide
             // ================================================================
             this.panelSidebar.Dock       = DockStyle.Left;
-            this.panelSidebar.Width      = 240;
+            this.panelSidebar.Width      = 260;
             this.panelSidebar.BackColor  = Color.White;
             this.panelSidebar.Name       = "panelSidebar";
             this.panelSidebar.AutoScroll = true;
@@ -90,9 +90,9 @@ namespace QuanLyBanMayVT
                 e.Graphics.DrawLine(new Pen(Color.FromArgb(229, 231, 235), 1),
                     panelSidebar.Width - 1, 0, panelSidebar.Width - 1, panelSidebar.Height);
 
-            // User Info Panel (Top of sidebar - 64px height)
+            // User Info Panel (Top of sidebar - 48px height, matching top bar)
             this.panelSidebarUser.Location  = new Point(0, 0);
-            this.panelSidebarUser.Size      = new Size(240, 64);
+            this.panelSidebarUser.Size      = new Size(260, 48);
             this.panelSidebarUser.BackColor = Color.FromArgb(248, 250, 252);
             this.panelSidebarUser.Name      = "panelSidebarUser";
             this.panelSidebarUser.Paint += (s, e) =>
@@ -101,8 +101,8 @@ namespace QuanLyBanMayVT
 
             // User Name Label (Font 11pt Bold)
             this.lblTenNguoiDung.AutoSize  = true;
-            this.lblTenNguoiDung.Location  = new Point(12, 18);
-            this.lblTenNguoiDung.Font      = new Font("Segoe UI", 11F, FontStyle.Bold);
+            this.lblTenNguoiDung.Location  = new Point(14, 13);
+            this.lblTenNguoiDung.Font      = new Font("Segoe UI", 10.5F, FontStyle.Bold);
             this.lblTenNguoiDung.ForeColor = Color.FromArgb(17, 24, 39);
             this.lblTenNguoiDung.TextAlign = ContentAlignment.MiddleLeft;
             this.lblTenNguoiDung.Name      = "lblTenNguoiDung";
@@ -110,7 +110,7 @@ namespace QuanLyBanMayVT
             // User Role Badge Label (Font 9pt Bold)
             this.lblVaiTro.AutoSize  = true;
             this.lblVaiTro.Padding   = new Padding(8, 3, 8, 3);
-            this.lblVaiTro.Font      = new Font("Segoe UI", 9F, FontStyle.Bold);
+            this.lblVaiTro.Font      = new Font("Segoe UI", 8.5F, FontStyle.Bold);
             this.lblVaiTro.ForeColor = Color.White;
             this.lblVaiTro.TextAlign = ContentAlignment.MiddleCenter;
             this.lblVaiTro.BackColor = Color.FromArgb(124, 58, 237);
@@ -119,8 +119,8 @@ namespace QuanLyBanMayVT
             this.panelSidebarUser.Controls.Add(this.lblTenNguoiDung);
             this.panelSidebarUser.Controls.Add(this.lblVaiTro);
 
-            // Nav buttons - start at y=68 (below 64px user panel + 4px gap)
-            int btnY = 68;
+            // Nav buttons - start at y=52 (below 48px user panel + 4px gap)
+            int btnY = 52;
             SetupSidebarBtn(this.btnDashboard, "Dashboard", ref btnY, true);
             SetupSidebarBtn(this.btnHangHoa,   "H\u00e0ng ho\u00e1", ref btnY, false);
             SetupSidebarBtn(this.btnNhapHang,  "Nh\u1eadp h\u00e0ng", ref btnY, false);
@@ -143,7 +143,7 @@ namespace QuanLyBanMayVT
             // TOP BAR
             // ================================================================
             this.panelTop.Dock      = DockStyle.Top;
-            this.panelTop.Height    = 46;
+            this.panelTop.Height    = 48;
             this.panelTop.BackColor = Color.White;
             this.panelTop.Name      = "panelTop";
             this.panelTop.Paint += (s, e) =>
@@ -180,14 +180,14 @@ namespace QuanLyBanMayVT
             this.statusStrip.BackColor  = Color.White;
             this.statusStrip.ForeColor  = Color.FromArgb(107, 114, 128);
             this.statusStrip.SizingGrip = false;
-            this.lblStatus = new ToolStripStatusLabel("© 2025 Qu\u1ea3n L\u00fd B\u00e1n M\u00e1y Vi T\u00ednh");
+            this.lblStatus = new ToolStripStatusLabel("\u00a9 2026 Qu\u1ea3n L\u00fd B\u00e1n M\u00e1y Vi T\u00ednh");
             this.statusStrip.Items.Add(lblStatus);
 
             // ================================================================
             // FORM
             // ================================================================
-            this.AutoScaleDimensions = new SizeF(7F, 15F);
-            this.AutoScaleMode       = AutoScaleMode.Font;
+            this.AutoScaleDimensions = new SizeF(96F, 96F);
+            this.AutoScaleMode       = AutoScaleMode.Dpi;
             this.ClientSize          = new Size(1200, 700);
             this.Controls.Add(this.panelContent);
             this.Controls.Add(this.panelTop);
@@ -211,7 +211,7 @@ namespace QuanLyBanMayVT
         {
             btn.Text      = text;
             btn.Location  = new Point(0, y);
-            btn.Size      = new Size(240, 44);
+            btn.Size      = new Size(260, 44);
             btn.Font      = new Font("Segoe UI", 9.5F, active ? FontStyle.Bold : FontStyle.Regular);
             btn.ForeColor = active ? Color.FromArgb(37, 99, 235) : Color.FromArgb(55, 65, 81);
             btn.BackColor = active ? Color.FromArgb(239, 246, 255) : Color.White;
