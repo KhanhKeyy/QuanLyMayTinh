@@ -52,7 +52,7 @@ namespace QuanLyBanMayVT.DataAccess
                 const string sql = @"
                     SELECT MaNhanVien, HoTen, Email, SoDienThoai, ChucVu, MaTaiKhoan, NgayVaoLam
                     FROM   NhanVien
-                    ORDER BY HoTen";
+                    ORDER BY MaNhanVien";
                 using var cmd    = new SqlCommand(sql, conn);
                 using var reader = cmd.ExecuteReader();
                 while (reader.Read()) list.Add(MapRow(reader));

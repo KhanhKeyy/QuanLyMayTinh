@@ -15,6 +15,7 @@ namespace QuanLyBanMayVT.Models
         {
             "Ton kho thap"      => "⚠️ Tồn kho thấp",
             "Ket qua don hang"  => "📦 Kết quả đơn hàng",
+            "De xuat sp"        => "💡 Đề xuất sản phẩm",
             _                   => LoaiThongBao
         };
     }

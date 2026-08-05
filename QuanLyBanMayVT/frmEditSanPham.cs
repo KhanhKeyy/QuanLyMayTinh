@@ -22,18 +22,47 @@ namespace QuanLyBanMayVT
         private Button btnLuu = null!;
         private Button btnHuy = null!;
 
-        public frmEditSanPham(SanPham? spTarget = null)
+        private readonly bool _isReadOnly;
+
+        public frmEditSanPham(SanPham? spTarget = null, bool isReadOnly = false)
         {
             _spTarget = spTarget;
+            _isReadOnly = isReadOnly;
             InitUI();
             LoadDanhMuc();
             LoadDataTarget();
+
+            if (_isReadOnly)
+            {
+                ApplyReadOnlyMode();
+            }
+        }
+
+        private void ApplyReadOnlyMode()
+        {
+            txtTenSP.ReadOnly = true;
+            cboDanhMuc.Enabled = false;
+            numGiaBan.Enabled = false;
+            numSoLuongTon.Enabled = false;
+            numMucToiThieu.Enabled = false;
+            cboTrangThai.Enabled = false;
+            txtCauHinh.ReadOnly = true;
+
+            txtTenSP.BackColor = Color.White;
+            txtCauHinh.BackColor = Color.White;
+
+            btnLuu.Visible = false;
+            btnHuy.Text = "Đóng";
+            btnHuy.Location = new Point(140, btnHuy.Location.Y);
+            btnHuy.Width = 140;
+            btnHuy.Font = new Font("Segoe UI", 10F, FontStyle.Bold);
+            btnHuy.BackColor = UIStyleHelper.PrimaryBlue;
         }
 
         private void InitUI()
         {
             bool isEdit = _spTarget != null;
-            this.Text = isEdit ? "✏️ Chỉnh Sửa Sản Phẩm" : "➕ Thêm Sản Phẩm Mới";
+            this.Text = _isReadOnly ? "🔍 Chi Tiết Sản Phẩm" : (isEdit ? "✏️ Chỉnh Sửa Sản Phẩm" : "➕ Thêm Sản Phẩm Mới");
             this.Size = new Size(580, 560);
             this.StartPosition = FormStartPosition.CenterParent;
             this.FormBorderStyle = FormBorderStyle.FixedDialog;
@@ -53,7 +82,7 @@ namespace QuanLyBanMayVT
             };
             var lblTitle = new Label
             {
-                Text = isEdit ? "✏️ CHỈNH SỬA THÔNG TIN SẢN PHẨM" : "➕ THÊM SẢN PHẨM MỚI VÀO HỆ THỐNG",
+                Text = _isReadOnly ? "🔍 CHI TIẾT THÔNG TIN SẢN PHẨM" : (isEdit ? "✏️ CHỈNH SỬA THÔNG TIN SẢN PHẨM" : "➕ THÊM SẢN PHẨM MỚI VÀO HỆ THỐNG"),
                 Font = new Font("Segoe UI", 12.5F, FontStyle.Bold),
                 ForeColor = Color.FromArgb(99, 179, 237),
                 Dock = DockStyle.Fill,

@@ -34,6 +34,8 @@ namespace QuanLyBanMayVT.Common
             dgv.CellBorderStyle           = DataGridViewCellBorderStyle.SingleHorizontal;
             dgv.GridColor                 = Color.FromArgb(229, 231, 235);   // #E5E7EB
             dgv.RowHeadersVisible         = false;
+            dgv.AllowUserToResizeColumns  = false;
+            dgv.AllowUserToResizeRows     = false;
 
             // Column headers
             dgv.ColumnHeadersDefaultCellStyle.BackColor   = Color.FromArgb(243, 244, 246);
@@ -45,10 +47,11 @@ namespace QuanLyBanMayVT.Common
             dgv.ColumnHeadersHeight                       = 38;
             dgv.ColumnHeadersHeightSizeMode               = DataGridViewColumnHeadersHeightSizeMode.DisableResizing;
 
-            // Rows
+            // Rows — fixed height 56px (3 lines tall), vertically middle, horizontally left
             dgv.DefaultCellStyle.BackColor          = Color.White;
             dgv.DefaultCellStyle.ForeColor          = Color.FromArgb(17, 24, 39);
             dgv.DefaultCellStyle.Font               = new Font("Segoe UI", 9.5F);
+            dgv.DefaultCellStyle.Alignment          = DataGridViewContentAlignment.MiddleLeft;
             dgv.DefaultCellStyle.SelectionBackColor = Color.FromArgb(219, 234, 254);  // light blue
             dgv.DefaultCellStyle.SelectionForeColor = Color.FromArgb(29, 78, 216);
             dgv.DefaultCellStyle.Padding            = new Padding(6, 0, 6, 0);
@@ -56,10 +59,12 @@ namespace QuanLyBanMayVT.Common
             // Alternating rows — very light gray
             dgv.AlternatingRowsDefaultCellStyle.BackColor          = Color.FromArgb(249, 250, 251);
             dgv.AlternatingRowsDefaultCellStyle.ForeColor          = Color.FromArgb(17, 24, 39);
+            dgv.AlternatingRowsDefaultCellStyle.Alignment          = DataGridViewContentAlignment.MiddleLeft;
             dgv.AlternatingRowsDefaultCellStyle.SelectionBackColor = Color.FromArgb(219, 234, 254);
             dgv.AlternatingRowsDefaultCellStyle.SelectionForeColor = Color.FromArgb(29, 78, 216);
 
-            dgv.RowTemplate.Height = 35;
+            dgv.RowTemplate.Height = 56;
+            dgv.AutoSizeRowsMode = DataGridViewAutoSizeRowsMode.None;
         }
 
         // ────────────────────────────────────────────────────────────────

@@ -13,7 +13,7 @@ namespace QuanLyBanMayVT.DataAccess
                 using var conn = DatabaseHelper.GetConnection();
                 string sql = @"SELECT * FROM ThongBao WHERE MaTaiKhoanNhan = @mtk";
                 if (chiChuaDoc) sql += " AND DaDoc = 0";
-                sql += " ORDER BY NgayTao DESC";
+                sql += " ORDER BY MaThongBao DESC";
                 using var cmd = new SqlCommand(sql, conn);
                 cmd.Parameters.AddWithValue("@mtk", maTaiKhoan);
                 using var r = cmd.ExecuteReader();

@@ -356,12 +356,12 @@ namespace QuanLyBanMayVT
             if (UserSession.IsNVBanHang)
             {
                 btnHangHoa.Visible = true; btnDonHang.Visible = true; btnTonKho.Visible = true;
-                menuHangHoa_Them.Visible = menuHangHoa_Sua.Visible = menuHangHoa_Xoa.Visible = false;
+                menuHangHoa_Them.Visible = menuHangHoa_Sua.Visible = menuHangHoa_Xoa.Visible = true;
             }
             else if (UserSession.IsKeToan)
             {
                 btnHangHoa.Visible = true; btnDonHang.Visible = true;
-                btnHoaDon.Visible  = true; btnTonKho.Visible  = true;
+                btnHoaDon.Visible  = true; btnTonKho.Visible  = false;
                 menuHangHoa_Them.Visible = menuHangHoa_Sua.Visible = menuHangHoa_Xoa.Visible = false;
             }
             else if (UserSession.IsQuanLy)
@@ -432,7 +432,8 @@ namespace QuanLyBanMayVT
         {
             if (UserSession.IsNVBanHang)
                 return "📋 Chức năng của bạn:\n" +
-                       "  • Kiểm tra tình trạng hàng hoá trong kho\n" +
+                       "  • Đề xuất thêm sản phẩm mới gửi Quản lý kiểm duyệt\n" +
+                       "  • Kiểm tra tình trạng hàng hoá & theo dõi tồn kho\n" +
                        "  • Xác nhận đơn hàng của khách và gửi đến kế toán\n\n" +
                        "Chọn mục trong thanh bên trái để bắt đầu làm việc.";
             if (UserSession.IsKeToan)
@@ -440,13 +441,13 @@ namespace QuanLyBanMayVT
                        "  • Lập hóa đơn bán hàng từ đơn hàng đã xác nhận\n" +
                        "  • Cập nhật trạng thái thanh toán\n" +
                        "  • Thông báo kết quả cho khách hàng\n" +
-                       "  • Cập nhật số lượng tồn kho sau khi hoàn tất đơn\n\n" +
+                       "  • Hệ thống tự động cập nhật số lượng tồn kho khi hoàn tất đơn\n\n" +
                        "Chọn mục trong thanh bên trái để bắt đầu làm việc.";
             if (UserSession.IsQuanLy)
                 return "🏆 Chức năng của bạn:\n" +
-                       "  • Quản lý thông tin sản phẩm và danh mục\n" +
+                       "  • Phê duyệt các đề xuất thêm sản phẩm mới từ Nhân viên\n" +
+                       "  • Quản lý thông tin sản phẩm, danh mục và nhân sự\n" +
                        "  • Lập phiếu nhập hàng khi tồn kho dưới mức quy định\n" +
-                       "  • Theo dõi hoạt động nhập hàng và bán hàng\n" +
                        "  • Thống kê báo cáo doanh thu, tồn kho, sản phẩm bán chạy\n\n" +
                        "Chọn mục trong thanh bên trái để bắt đầu làm việc.";
             return "Chào mừng đến với hệ thống.";

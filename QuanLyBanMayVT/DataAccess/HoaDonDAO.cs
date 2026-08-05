@@ -38,7 +38,7 @@ namespace QuanLyBanMayVT.DataAccess
             try
             {
                 using var conn = DatabaseHelper.GetConnection();
-                using var cmd = new SqlCommand(SelectJoin + " ORDER BY hd.NgayLapHoaDon DESC", conn);
+                using var cmd = new SqlCommand(SelectJoin + " ORDER BY hd.MaHoaDon DESC", conn);
                 using var r = cmd.ExecuteReader();
                 while (r.Read()) list.Add(MapRow(r));
             }

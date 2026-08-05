@@ -1,4 +1,5 @@
 using System.Data.SqlClient;
+using QuanLyBanMayVT.Common;
 using QuanLyBanMayVT.Models;
 
 namespace QuanLyBanMayVT.DataAccess
@@ -43,7 +44,7 @@ namespace QuanLyBanMayVT.DataAccess
                 using var conn = DatabaseHelper.GetConnection();
                 string sql = SelectJoin;
                 if (!string.IsNullOrEmpty(trangThai)) sql += " WHERE dh.TrangThaiDonHang = @tt";
-                sql += " ORDER BY dh.NgayDatHang DESC";
+                sql += " ORDER BY dh.MaDonHang DESC";
                 using var cmd = new SqlCommand(sql, conn);
                 if (!string.IsNullOrEmpty(trangThai))
                     cmd.Parameters.AddWithValue("@tt", trangThai);
@@ -60,7 +61,7 @@ namespace QuanLyBanMayVT.DataAccess
             try
             {
                 using var conn = DatabaseHelper.GetConnection();
-                string sql = SelectJoin + " WHERE dh.MaKhachHang = @mkh ORDER BY dh.NgayDatHang DESC";
+                string sql = SelectJoin + " WHERE dh.MaKhachHang = @mkh ORDER BY dh.MaDonHang DESC";
                 using var cmd = new SqlCommand(sql, conn);
                 cmd.Parameters.AddWithValue("@mkh", maKhachHang);
                 using var r = cmd.ExecuteReader();
@@ -91,6 +92,32 @@ namespace QuanLyBanMayVT.DataAccess
             using var tran = conn.BeginTransaction();
             try
             {
+                // Kiểm tra số lượng tồn kho trước khi đặt hàng
+                foreach (var ct in chiTiet)
+                {
+                    var cmdCheck = new SqlCommand("SELECT TenSanPham, SoLuongTon FROM SanPham WHERE MaSanPham = @msp", conn, tran);
+                    cmdCheck.Parameters.AddWithValue("@msp", ct.MaSanPham);
+                    using var rCheck = cmdCheck.ExecuteReader();
+                    if (rCheck.Read())
+                    {
+                        string tenSP = rCheck["TenSanPham"]?.ToString() ?? "";
+                        int ton = Convert.ToInt32(rCheck["SoLuongTon"]);
+                        rCheck.Close();
+
+                        if (ct.SoLuong > ton)
+                        {
+                            tran.Rollback();
+                            MessageBox.Show($"⚠️ Rất tiếc, sản phẩm '{tenSP}' chỉ còn {ton} cái trong kho, không đủ để đặt {ct.SoLuong} cái!\nVui lòng giảm số lượng mua.",
+                                "Cảnh báo tồn kho", MessageBoxButtons.OK, MessageBoxIcon.Warning);
+                            return -1;
+                        }
+                    }
+                    else
+                    {
+                        rCheck.Close();
+                    }
+                }
+
                 // Tạo đơn hàng
                 var cmdDH = new SqlCommand(@"
                     INSERT INTO DonHang (MaKhachHang, NgayDatHang, MaPhuongThucTT, TrangThaiDonHang, GhiChu)
@@ -216,6 +243,28 @@ namespace QuanLyBanMayVT.DataAccess
             }
             catch (Exception ex) { ShowError(ex); }
             return list;
+        }
+
+        /// <summary>Đặt lại đơn hàng cũ (sao chép sản phẩm vào Giỏ hàng)</summary>
+        public bool DatLaiDonHang(int maDonHang)
+        {
+            try
+            {
+                var ctList = GetChiTiet(maDonHang);
+                if (ctList == null || ctList.Count == 0) return false;
+
+                var spDao = new SanPhamDAO();
+                foreach (var ct in ctList)
+                {
+                    var sp = spDao.GetById(ct.MaSanPham);
+                    if (sp != null && sp.SoLuongTon > 0)
+                    {
+                        GioHangManager.ThemVaoGio(sp, ct.SoLuong);
+                    }
+                }
+                return true;
+            }
+            catch { return false; }
         }
 
         private static void ShowError(Exception ex) =>

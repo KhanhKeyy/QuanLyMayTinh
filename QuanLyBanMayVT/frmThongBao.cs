@@ -1,3 +1,8 @@
+using System;
+using System.Collections.Generic;
+using System.Drawing;
+using System.Linq;
+using System.Windows.Forms;
 using QuanLyBanMayVT.Common;
 using QuanLyBanMayVT.DataAccess;
 using QuanLyBanMayVT.Models;
@@ -10,6 +15,7 @@ namespace QuanLyBanMayVT
         private Label lblThongKe = null!;
         private Button btnDanhDauDaDoc = null!;
         private int _maTaiKhoan;
+        private List<ThongBao> _currentList = new();
 
         public frmThongBao()
         {
@@ -20,19 +26,18 @@ namespace QuanLyBanMayVT
         private void InitializeComponent()
         {
             this.Text = "🔔 Danh Sách Thông Báo";
-            this.Size = new Size(720, 500);
+            this.Size = new Size(880, 540);
             this.StartPosition = FormStartPosition.CenterParent;
             this.BackColor = UIStyleHelper.BgMain;
-            this.ForeColor = Color.White;
+            this.ForeColor = Color.FromArgb(17, 24, 39);
             this.Font = new Font("Segoe UI", 9.5F);
 
             // ── Top Panel ─────────────────────────────────────────────
             var pnlTop = new Panel
             {
                 Dock = DockStyle.Top,
-                Height = 60,
-                BackColor = UIStyleHelper.BgCard,
-                Padding = new Padding(16, 10, 16, 10)
+                Height = 65,
+                BackColor = UIStyleHelper.BgCard
             };
 
             lblThongKe = new Label
@@ -40,8 +45,8 @@ namespace QuanLyBanMayVT
                 Text = "🔔 Đang tải thông báo...",
                 AutoSize = true,
                 Font = new Font("Segoe UI", 11F, FontStyle.Bold),
-                ForeColor = Color.White,
-                Location = new Point(16, 16)
+                ForeColor = Color.FromArgb(17, 24, 39),
+                Location = new Point(20, 18)
             };
 
             btnDanhDauDaDoc = new Button
@@ -49,12 +54,13 @@ namespace QuanLyBanMayVT
                 Text = "✅ Đánh dấu tất cả đã đọc",
                 AutoSize = true,
                 Padding = new Padding(14, 6, 14, 6),
+                Height = 34,
+                Location = new Point(0, 15),
                 BackColor = UIStyleHelper.PrimaryBlue,
                 ForeColor = Color.White,
                 FlatStyle = FlatStyle.Flat,
                 Font = new Font("Segoe UI", 9F, FontStyle.Bold),
-                Cursor = Cursors.Hand,
-                Anchor = AnchorStyles.Top | AnchorStyles.Right
+                Cursor = Cursors.Hand
             };
             btnDanhDauDaDoc.FlatAppearance.BorderSize = 0;
             btnDanhDauDaDoc.Click += BtnDanhDauDaDoc_Click;
@@ -63,7 +69,8 @@ namespace QuanLyBanMayVT
             pnlTop.Controls.Add(btnDanhDauDaDoc);
             pnlTop.Resize += (s, e) =>
             {
-                btnDanhDauDaDoc.Left = pnlTop.ClientSize.Width - btnDanhDauDaDoc.Width - 16;
+                btnDanhDauDaDoc.Top = 15;
+                btnDanhDauDaDoc.Left = pnlTop.ClientSize.Width - btnDanhDauDaDoc.Width - 20;
             };
 
             // ── Grid Thông Báo ────────────────────────────────────────
@@ -77,7 +84,7 @@ namespace QuanLyBanMayVT
                 AllowUserToAddRows = false
             };
             UIStyleHelper.StyleDataGridView(dgvThongBao);
-            dgvThongBao.CellClick += DgvThongBao_CellClick;
+            dgvThongBao.CellContentClick += DgvThongBao_CellContentClick;
 
             this.Controls.Add(dgvThongBao);
             this.Controls.Add(pnlTop);
@@ -89,14 +96,16 @@ namespace QuanLyBanMayVT
         {
             if (_maTaiKhoan == 0) return;
 
-            var list = new ThongBaoDAO().GetByMaTaiKhoan(_maTaiKhoan);
-            int chuaDoc = list.Count(t => !t.DaDoc);
+            _currentList = new ThongBaoDAO().GetByMaTaiKhoan(_maTaiKhoan);
+            int chuaDoc = _currentList.Count(t => !t.DaDoc);
 
             lblThongKe.Text = chuaDoc > 0
                 ? $"🔔 Có {chuaDoc} thông báo chưa đọc"
                 : "🔔 Không có thông báo mới";
 
-            dgvThongBao.DataSource = list.Select(t => new
+            dgvThongBao.Columns.Clear();
+
+            dgvThongBao.DataSource = _currentList.Select(t => new
             {
                 t.MaThongBao,
                 Loai = t.LoaiDisplay,
@@ -105,19 +114,136 @@ namespace QuanLyBanMayVT
                 TrangThai = t.DaDoc ? "✅ Đã đọc" : "🔴 Chưa đọc"
             }).ToList();
 
-            if (dgvThongBao.Columns["MaThongBao"] != null) dgvThongBao.Columns["MaThongBao"].HeaderText = "Mã TB";
-            if (dgvThongBao.Columns["Loai"]        != null) dgvThongBao.Columns["Loai"].HeaderText        = "Loại Thông Báo";
-            if (dgvThongBao.Columns["NoiDung"]     != null) dgvThongBao.Columns["NoiDung"].HeaderText     = "Nội Dung";
-            if (dgvThongBao.Columns["NgayTao"]     != null) dgvThongBao.Columns["NgayTao"].HeaderText     = "Thời Gian";
-            if (dgvThongBao.Columns["TrangThai"]   != null) dgvThongBao.Columns["TrangThai"].HeaderText   = "Trạng Thái";
+            // 1. Mã TB (Nới rộng lên 80px để tiêu đề không bị nhảy 2 dòng, Căn giữa Tiêu đề và Ô)
+            if (dgvThongBao.Columns["MaThongBao"] != null)
+            {
+                var col = dgvThongBao.Columns["MaThongBao"];
+                col.HeaderText = "Mã TB";
+                col.AutoSizeMode = DataGridViewAutoSizeColumnMode.None;
+                col.Width = 80;
+                col.HeaderCell.Style.Alignment = DataGridViewContentAlignment.MiddleCenter;
+                col.DefaultCellStyle.Alignment = DataGridViewContentAlignment.MiddleCenter;
+            }
+
+            // 2. Loại Thông Báo (Căn trái cả Tiêu đề và Ô)
+            if (dgvThongBao.Columns["Loai"] != null)
+            {
+                var col = dgvThongBao.Columns["Loai"];
+                col.HeaderText = "Loại Thông Báo";
+                col.HeaderCell.Style.Alignment = DataGridViewContentAlignment.MiddleLeft;
+                col.DefaultCellStyle.Alignment = DataGridViewContentAlignment.MiddleLeft;
+            }
+
+            // 3. Nội Dung (Căn trái cả Tiêu đề và Ô)
+            if (dgvThongBao.Columns["NoiDung"] != null)
+            {
+                var col = dgvThongBao.Columns["NoiDung"];
+                col.HeaderText = "Nội Dung";
+                col.HeaderCell.Style.Alignment = DataGridViewContentAlignment.MiddleLeft;
+                col.DefaultCellStyle.Alignment = DataGridViewContentAlignment.MiddleLeft;
+            }
+
+            // 4. Thời Gian (Căn giữa cả Tiêu đề và Ô)
+            if (dgvThongBao.Columns["NgayTao"] != null)
+            {
+                var col = dgvThongBao.Columns["NgayTao"];
+                col.HeaderText = "Thời Gian";
+                col.AutoSizeMode = DataGridViewAutoSizeColumnMode.None;
+                col.Width = 140;
+                col.HeaderCell.Style.Alignment = DataGridViewContentAlignment.MiddleCenter;
+                col.DefaultCellStyle.Alignment = DataGridViewContentAlignment.MiddleCenter;
+            }
+
+            // 5. Trạng Thái (Căn giữa cả Tiêu đề và Ô)
+            if (dgvThongBao.Columns["TrangThai"] != null)
+            {
+                var col = dgvThongBao.Columns["TrangThai"];
+                col.HeaderText = "Trạng Thái";
+                col.AutoSizeMode = DataGridViewAutoSizeColumnMode.None;
+                col.Width = 115;
+                col.HeaderCell.Style.Alignment = DataGridViewContentAlignment.MiddleCenter;
+                col.DefaultCellStyle.Alignment = DataGridViewContentAlignment.MiddleCenter;
+            }
+
+            // 6. Cột nút Xem Chi Tiết / Đọc (Căn giữa cả Tiêu đề và Ô)
+            var btnColDoc = new DataGridViewButtonColumn
+            {
+                Name = "colDoc",
+                HeaderText = "Xem Nội Dung",
+                Text = "👁️ Đọc",
+                UseColumnTextForButtonValue = true,
+                AutoSizeMode = DataGridViewAutoSizeColumnMode.None,
+                Width = 135,
+                HeaderCell = { Style = { Alignment = DataGridViewContentAlignment.MiddleCenter } },
+                DefaultCellStyle = new DataGridViewCellStyle
+                {
+                    Alignment = DataGridViewContentAlignment.MiddleCenter,
+                    Padding = new Padding(12, 10, 12, 10)
+                }
+            };
+            dgvThongBao.Columns.Add(btnColDoc);
+
+            // 7. Cột nút Duyệt Đề Xuất cho Quản Lý (Căn giữa cả Tiêu đề và Ô)
+            if (UserSession.IsQuanLy)
+            {
+                var btnColDuyet = new DataGridViewButtonColumn
+                {
+                    Name = "colDuyet",
+                    HeaderText = "Duyệt Đề Xuất",
+                    Text = "📋 Duyệt đề xuất",
+                    UseColumnTextForButtonValue = true,
+                    AutoSizeMode = DataGridViewAutoSizeColumnMode.None,
+                    Width = 145,
+                    HeaderCell = { Style = { Alignment = DataGridViewContentAlignment.MiddleCenter } },
+                    DefaultCellStyle = new DataGridViewCellStyle
+                    {
+                        Alignment = DataGridViewContentAlignment.MiddleCenter,
+                        Padding = new Padding(8, 10, 8, 10)
+                    }
+                };
+                dgvThongBao.Columns.Add(btnColDuyet);
+            }
+
+            if (btnDanhDauDaDoc.Parent != null)
+            {
+                btnDanhDauDaDoc.Left = btnDanhDauDaDoc.Parent.ClientSize.Width - btnDanhDauDaDoc.Width - 20;
+            }
         }
 
-        private void DgvThongBao_CellClick(object? sender, DataGridViewCellEventArgs e)
+        private void DgvThongBao_CellContentClick(object? sender, DataGridViewCellEventArgs e)
         {
-            if (e.RowIndex < 0 || dgvThongBao.CurrentRow == null) return;
-            int maTB = (int)dgvThongBao.CurrentRow.Cells["MaThongBao"].Value;
-            new ThongBaoDAO().DanhDauDaDoc(maTB);
-            TaiDanhSachThongBao();
+            if (e.RowIndex < 0 || e.RowIndex >= _currentList.Count) return;
+
+            string colName = dgvThongBao.Columns[e.ColumnIndex].Name;
+            var selectedTB = _currentList[e.RowIndex];
+
+            if (colName == "colDoc")
+            {
+                // Mở cửa sổ Chi tiết Thông báo
+                using var dlg = new frmChiTietThongBao(selectedTB);
+                dlg.ShowDialog();
+
+                // ĐÁNH DẤU ĐÃ ĐỌC SAU KHI ĐÓNG CỬA SỔ
+                new ThongBaoDAO().DanhDauDaDoc(selectedTB.MaThongBao);
+                TaiDanhSachThongBao();
+
+                if (Application.OpenForms["frmMain"] is frmMain mainForm)
+                {
+                    mainForm.CapNhatBadgeThongBao();
+                }
+            }
+            else if (colName == "colDuyet")
+            {
+                // Quản lý nhấn nút Duyệt Đề Xuất trong bảng thông báo
+                using var dlg = new frmKiemDuyetDeXuat();
+                dlg.ShowDialog();
+                TaiDanhSachThongBao();
+
+                if (Application.OpenForms["frmMain"] is frmMain mainForm)
+                {
+                    mainForm.CapNhatBadgeThongBao();
+                }
+            }
         }
 
         private void BtnDanhDauDaDoc_Click(object? sender, EventArgs e)
@@ -130,6 +256,11 @@ namespace QuanLyBanMayVT
                 dao.DanhDauDaDoc(tb.MaThongBao);
             }
             TaiDanhSachThongBao();
+
+            if (Application.OpenForms["frmMain"] is frmMain mainForm)
+            {
+                mainForm.CapNhatBadgeThongBao();
+            }
         }
     }
 }

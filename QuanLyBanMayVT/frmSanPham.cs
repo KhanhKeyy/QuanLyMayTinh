@@ -135,13 +135,42 @@ namespace QuanLyBanMayVT
             btnXoa.FlatAppearance.BorderSize = 0;
             btnXoa.Click += (s, e) => XoaSelected();
 
+            // Nút Đề xuất sản phẩm mới (Dành cho Nhân viên)
+            var btnDeXuat = new Button
+            {
+                Text = "💡 Đề xuất SP mới",
+                AutoSize = true,
+                Padding = new Padding(12, 0, 12, 0),
+                Height = 34,
+                Margin = new Padding(0, 0, 10, 0),
+                BackColor = Color.FromArgb(124, 58, 237),
+                ForeColor = Color.White,
+                FlatStyle = FlatStyle.Flat,
+                Font = new Font("Segoe UI", 9.5F, FontStyle.Bold),
+                Cursor = Cursors.Hand
+            };
+            btnDeXuat.FlatAppearance.BorderSize = 0;
+            btnDeXuat.Click += (s, e) =>
+            {
+                using var dlg = new frmDeXuatSanPham();
+                dlg.ShowDialog();
+            };
+
             flowTop.Controls.Add(lblTK);
             flowTop.Controls.Add(txtTimKiem);
             flowTop.Controls.Add(lblDM);
             flowTop.Controls.Add(cboFilterDanhMuc);
-            flowTop.Controls.Add(btnThem);
-            flowTop.Controls.Add(btnSua);
-            flowTop.Controls.Add(btnXoa);
+
+            if (UserSession.IsQuanLy)
+            {
+                flowTop.Controls.Add(btnThem);
+                flowTop.Controls.Add(btnSua);
+                flowTop.Controls.Add(btnXoa);
+            }
+            else if (UserSession.IsNVBanHang)
+            {
+                flowTop.Controls.Add(btnDeXuat);
+            }
 
             pnlTop.Controls.Add(flowTop);
 
@@ -153,8 +182,7 @@ namespace QuanLyBanMayVT
                 SelectionMode = DataGridViewSelectionMode.FullRowSelect,
                 MultiSelect = false,
                 ReadOnly = true,
-                AllowUserToAddRows = false,
-                AutoSizeRowsMode = DataGridViewAutoSizeRowsMode.AllCellsExceptHeaders
+                AllowUserToAddRows = false
             };
             UIStyleHelper.StyleDataGridView(dgvSanPham);
             dgvSanPham.DefaultCellStyle.WrapMode = DataGridViewTriState.True;
@@ -361,7 +389,7 @@ namespace QuanLyBanMayVT
         {
             if (dgvSanPham.CurrentRow == null)
             {
-                MessageBox.Show("Vui lòng chọn sản phẩm cần sửa.", "Thông báo", MessageBoxButtons.OK, MessageBoxIcon.Warning);
+                MessageBox.Show("Vui lòng chọn sản phẩm cần xem.", "Thông báo", MessageBoxButtons.OK, MessageBoxIcon.Warning);
                 return;
             }
 
@@ -369,7 +397,8 @@ namespace QuanLyBanMayVT
             var sp = new SanPhamDAO().GetById(id);
             if (sp == null) return;
 
-            using var dialog = new frmEditSanPham(sp);
+            bool isReadOnly = !UserSession.IsQuanLy;
+            using var dialog = new frmEditSanPham(sp, isReadOnly: isReadOnly);
             if (dialog.ShowDialog(this) == DialogResult.OK)
             {
                 LoadData();

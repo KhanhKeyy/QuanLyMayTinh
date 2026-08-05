@@ -631,17 +631,43 @@ namespace QuanLyBanMayVT
         public int SoHoaDon { get; set; }
     }
 
+    public class TonKhoRow
+    {
+        public int STT { get; set; }
+        public int MaSanPham { get; set; }
+        public string TenSanPham { get; set; } = "";
+        public string TenDanhMuc { get; set; } = "";
+        public int SoLuongTon { get; set; }
+        public int MucTonToiThieu { get; set; }
+        public int CanNhapThem { get; set; }
+        public string TrangThai { get; set; } = "";
+    }
+
+    public class BanChayRow
+    {
+        public int STT { get; set; }
+        public int MaSanPham { get; set; }
+        public string TenSanPham { get; set; } = "";
+        public string TenDanhMuc { get; set; } = "";
+        public int TongDaBan { get; set; }
+        public decimal TongDoanhThu { get; set; }
+    }
+
     public class frmBaoCao : Form
     {
-        private readonly string _loaiBaoCao;
+        private string _loaiBaoCaoMode;
 
-        // Metric Card Labels
-        private Label lblCardDoanhThu = null!;
-        private Label lblCardChiPhi = null!;
-        private Label lblCardLoiNhuan = null!;
-        private Label lblCardSoHoaDon = null!;
+        // Metric Card Labels & Titles
+        private Label lblCard1Title = null!, lblCardDoanhThu = null!;
+        private Label lblCard2Title = null!, lblCardChiPhi = null!;
+        private Label lblCard3Title = null!, lblCardLoiNhuan = null!;
+        private Label lblCard4Title = null!, lblCardSoHoaDon = null!;
+
+        // Title
+        private Label lblTitle = null!;
 
         // Filter Controls
+        private Label lblTG = null!, lblNam = null!, lblThang = null!;
         private ComboBox cboLoaiThoiGian = null!;
         private ComboBox cboNam = null!;
         private ComboBox cboThang = null!;
@@ -658,6 +684,8 @@ namespace QuanLyBanMayVT
         private int _currentPage = 1;
         private const int PageSize = 10;
         private List<ThongKeRow> _fullDataList = new();
+        private List<TonKhoRow> _fullTonKhoList = new();
+        private List<BanChayRow> _fullBanChayList = new();
 
         private Panel pnlPagination = null!;
         private Label lblPageInfo = null!;
@@ -667,19 +695,19 @@ namespace QuanLyBanMayVT
 
         public frmBaoCao(string loaiBaoCao = "DoanhThu")
         {
-            _loaiBaoCao = loaiBaoCao;
+            _loaiBaoCaoMode = string.IsNullOrEmpty(loaiBaoCao) ? "DoanhThu" : loaiBaoCao;
             InitUI();
-            LoadThongKeData();
+            ChonLoaiBaoCao(_loaiBaoCaoMode);
         }
 
         private void InitUI()
         {
-            this.Text = "Thống kê";
+            this.Text = "Báo cáo thống kê";
             this.BackColor = UIStyleHelper.BgMain;
             this.ForeColor = Color.FromArgb(17, 24, 39);
             this.Font = new Font("Segoe UI", 9.5F);
 
-            // ── 1. TOP TITLE ────────────────────────────────────────────
+            // ── 1. TOP TITLE ─────────────────────────────────────────────
             var pnlTitle = new Panel
             {
                 Dock = DockStyle.Top,
@@ -687,14 +715,16 @@ namespace QuanLyBanMayVT
                 Padding = new Padding(18, 10, 18, 0),
                 BackColor = UIStyleHelper.BgMain
             };
-            var lblTitle = new Label
+
+            lblTitle = new Label
             {
                 Text = "Thống kê",
-                Font = new Font("Segoe UI", 14F, FontStyle.Bold),
+                Font = new Font("Segoe UI", 13.5F, FontStyle.Bold),
                 ForeColor = Color.FromArgb(17, 24, 39),
                 Dock = DockStyle.Left,
                 AutoSize = true
             };
+
             pnlTitle.Controls.Add(lblTitle);
 
             // ── 2. METRIC KPI CARDS (4 CARDS) ───────────────────────────
@@ -714,10 +744,10 @@ namespace QuanLyBanMayVT
                 BackColor = UIStyleHelper.BgMain
             };
 
-            card1 = CreateMetricCard("Doanh thu", out lblCardDoanhThu, Color.FromArgb(37, 99, 235), Color.FromArgb(37, 99, 235));
-            card2 = CreateMetricCard("Chi phí", out lblCardChiPhi, Color.FromArgb(225, 29, 72), Color.FromArgb(225, 29, 72));
-            card3 = CreateMetricCard("Lợi nhuận", out lblCardLoiNhuan, Color.FromArgb(5, 150, 105), Color.FromArgb(225, 29, 72));
-            card4 = CreateMetricCard("Số hóa đơn", out lblCardSoHoaDon, Color.FromArgb(124, 58, 237), Color.FromArgb(124, 58, 237));
+            card1 = CreateMetricCard("Doanh thu", out lblCard1Title, out lblCardDoanhThu, Color.FromArgb(37, 99, 235), Color.FromArgb(37, 99, 235));
+            card2 = CreateMetricCard("Chi phí",   out lblCard2Title, out lblCardChiPhi,   Color.FromArgb(225, 29, 72), Color.FromArgb(225, 29, 72));
+            card3 = CreateMetricCard("Lợi nhuận", out lblCard3Title, out lblCardLoiNhuan, Color.FromArgb(5, 150, 105), Color.FromArgb(5, 150, 105));
+            card4 = CreateMetricCard("Số hóa đơn",out lblCard4Title, out lblCardSoHoaDon, Color.FromArgb(124, 58, 237), Color.FromArgb(124, 58, 237));
 
             flowCards.Controls.Add(card1);
             flowCards.Controls.Add(card2);
@@ -744,7 +774,7 @@ namespace QuanLyBanMayVT
                 BackColor = UIStyleHelper.BgMain
             };
 
-            var lblTG = new Label
+            lblTG = new Label
             {
                 Text = "Thời gian:",
                 AutoSize = true,
@@ -757,7 +787,7 @@ namespace QuanLyBanMayVT
             cboLoaiThoiGian.Items.AddRange(new object[] { "Tháng", "Năm", "Tất cả" });
             cboLoaiThoiGian.SelectedIndex = 0;
 
-            var lblNam = new Label
+            lblNam = new Label
             {
                 Text = "Năm:",
                 AutoSize = true,
@@ -771,7 +801,7 @@ namespace QuanLyBanMayVT
             for (int y = curYear; y >= curYear - 5; y--) cboNam.Items.Add(y);
             cboNam.SelectedIndex = 0;
 
-            var lblThang = new Label
+            lblThang = new Label
             {
                 Text = "Tháng:",
                 AutoSize = true,
@@ -797,7 +827,7 @@ namespace QuanLyBanMayVT
                 Cursor = Cursors.Hand
             };
             btnXem.FlatAppearance.BorderSize = 0;
-            btnXem.Click += (s, e) => LoadThongKeData();
+            btnXem.Click += (s, e) => LoadDataCurrentMode();
 
             btnXuat = new Button
             {
@@ -824,7 +854,7 @@ namespace QuanLyBanMayVT
 
             pnlFilter.Controls.Add(flowFilter);
 
-            // ── 4. DATA GRID VIEW (Dark Slate Header like reference UI) ─
+            // ── 4. DATA GRID VIEW ───────────────────────────────────────
             var pnlGridContainer = new Panel
             {
                 Dock = DockStyle.Fill,
@@ -839,25 +869,9 @@ namespace QuanLyBanMayVT
                 SelectionMode = DataGridViewSelectionMode.FullRowSelect,
                 MultiSelect = false,
                 ReadOnly = true,
-                AllowUserToAddRows = false,
-                EnableHeadersVisualStyles = false
+                AllowUserToAddRows = false
             };
-            
-            // Header màu xám đen mờ đậm `#334155` chữ trắng
-            dgvThongKe.ColumnHeadersDefaultCellStyle.BackColor = Color.FromArgb(51, 65, 85);
-            dgvThongKe.ColumnHeadersDefaultCellStyle.ForeColor = Color.White;
-            dgvThongKe.ColumnHeadersDefaultCellStyle.Font = new Font("Segoe UI", 9.5F, FontStyle.Bold);
-            dgvThongKe.ColumnHeadersHeight = 42;
-            dgvThongKe.ColumnHeadersHeightSizeMode = DataGridViewColumnHeadersHeightSizeMode.DisableResizing;
-
-            dgvThongKe.DefaultCellStyle.BackColor = Color.White;
-            dgvThongKe.DefaultCellStyle.ForeColor = Color.FromArgb(30, 41, 59);
-            dgvThongKe.DefaultCellStyle.SelectionBackColor = Color.FromArgb(239, 246, 255);
-            dgvThongKe.DefaultCellStyle.SelectionForeColor = Color.FromArgb(30, 41, 59);
-            dgvThongKe.DefaultCellStyle.Font = new Font("Segoe UI", 9.5F);
-
-            dgvThongKe.AlternatingRowsDefaultCellStyle.BackColor = Color.FromArgb(248, 250, 252);
-
+            UIStyleHelper.StyleDataGridView(dgvThongKe);
             dgvThongKe.CellFormatting += DgvThongKe_CellFormatting;
 
             pnlGridContainer.Controls.Add(dgvThongKe);
@@ -900,7 +914,8 @@ namespace QuanLyBanMayVT
                 Cursor = Cursors.Hand
             };
             btnNext.Click += (s, e) => {
-                int totalPages = _fullDataList.Count == 0 ? 1 : (int)Math.Ceiling((double)_fullDataList.Count / PageSize);
+                int totalItems = GetCurrentTotalCount();
+                int totalPages = totalItems == 0 ? 1 : (int)Math.Ceiling((double)totalItems / PageSize);
                 if (_currentPage < totalPages) { _currentPage++; RenderPage(); }
             };
 
@@ -926,7 +941,35 @@ namespace QuanLyBanMayVT
             this.Controls.Add(pnlTitle);
         }
 
-        private Panel CreateMetricCard(string title, out Label lblValue, Color accentColor, Color textColor)
+        private void ChonLoaiBaoCao(string mode)
+        {
+            _loaiBaoCaoMode = mode;
+
+            if (mode == "DoanhThu")
+            {
+                lblTitle.Text = "📈 Thống kê Doanh Thu & Lợi Nhuận";
+                lblTG.Visible = cboLoaiThoiGian.Visible = lblNam.Visible = cboNam.Visible = lblThang.Visible = cboThang.Visible = btnXem.Visible = true;
+                btnXuat.Text = "⬇ Xuất báo cáo DT";
+            }
+            else if (mode == "TonKho")
+            {
+                lblTitle.Text = "📦 Báo cáo Hàng Tồn Kho & Cảnh Báo Cần Nhập";
+                lblTG.Visible = cboLoaiThoiGian.Visible = lblNam.Visible = cboNam.Visible = lblThang.Visible = cboThang.Visible = false;
+                btnXem.Visible = false;
+                btnXuat.Text = "⬇ Xuất báo cáo Tồn kho";
+            }
+            else if (mode == "BanChay")
+            {
+                lblTitle.Text = "🔥 Báo cáo Sản Phẩm Bán Chạy Nhất";
+                lblTG.Visible = cboLoaiThoiGian.Visible = lblNam.Visible = cboNam.Visible = lblThang.Visible = cboThang.Visible = false;
+                btnXem.Visible = false;
+                btnXuat.Text = "⬇ Xuất SP Bán Chạy";
+            }
+
+            LoadDataCurrentMode();
+        }
+
+        private Panel CreateMetricCard(string defaultTitle, out Label lblTitle, out Label lblValue, Color accentColor, Color textColor)
         {
             var card = new Panel
             {
@@ -942,9 +985,9 @@ namespace QuanLyBanMayVT
                 e.Graphics.FillRectangle(b, 0, 0, 5, card.Height);
             };
 
-            var lblTitle = new Label
+            lblTitle = new Label
             {
-                Text = title,
+                Text = defaultTitle,
                 Dock = DockStyle.Top,
                 Height = 22,
                 Font = new Font("Segoe UI", 9.5F, FontStyle.Bold),
@@ -954,9 +997,9 @@ namespace QuanLyBanMayVT
 
             lblValue = new Label
             {
-                Text = "0 đ",
+                Text = "0",
                 Dock = DockStyle.Fill,
-                Font = new Font("Segoe UI", 13F, FontStyle.Bold),
+                Font = new Font("Segoe UI", 12.5F, FontStyle.Bold),
                 ForeColor = textColor,
                 TextAlign = ContentAlignment.MiddleLeft
             };
@@ -991,6 +1034,13 @@ namespace QuanLyBanMayVT
 
             btnPrev.Left = pnlPageNumbers.Left - btnPrev.Width - 6;
             btnPrev.Top = 10;
+        }
+
+        private void LoadDataCurrentMode()
+        {
+            if (_loaiBaoCaoMode == "TonKho") LoadTonKhoData();
+            else if (_loaiBaoCaoMode == "BanChay") LoadBanChayData();
+            else LoadThongKeData();
         }
 
         private void LoadThongKeData()
@@ -1112,15 +1162,19 @@ namespace QuanLyBanMayVT
                 decimal totalProfit = totalRev - totalCost;
                 int totalInvoices = dataList.Sum(x => x.SoHoaDon);
 
+                lblCard1Title.Text = "Doanh thu";
                 lblCardDoanhThu.Text = $"{totalRev:N0} đ";
+
+                lblCard2Title.Text = "Chi phí";
                 lblCardChiPhi.Text = $"{totalCost:N0} đ";
 
+                lblCard3Title.Text = "Lợi nhuận";
                 lblCardLoiNhuan.Text = (totalProfit >= 0 ? "" : "-") + Math.Abs(totalProfit).ToString("N0") + " đ";
                 lblCardLoiNhuan.ForeColor = totalProfit >= 0 ? Color.FromArgb(5, 150, 105) : Color.FromArgb(225, 29, 72);
 
+                lblCard4Title.Text = "Số hóa đơn";
                 lblCardSoHoaDon.Text = totalInvoices.ToString();
 
-                // 5. Cập nhật dữ liệu phân trang
                 _fullDataList = dataList;
                 _currentPage = 1;
                 RenderPage();
@@ -1131,7 +1185,133 @@ namespace QuanLyBanMayVT
             }
         }
 
+        private void LoadTonKhoData()
+        {
+            try
+            {
+                var list = new SanPhamDAO().GetAll();
+                int totalSP = list.Count;
+                int canNhap = list.Count(p => p.SoLuongTon < p.MucTonToiThieu);
+                int hetHang = list.Count(p => p.SoLuongTon <= 0);
+                int totalTon = list.Sum(p => p.SoLuongTon);
+
+                lblCard1Title.Text = "Tổng SP kinh doanh";
+                lblCardDoanhThu.Text = totalSP.ToString() + " loại";
+
+                lblCard2Title.Text = "Cần nhập thêm";
+                lblCardChiPhi.Text = canNhap.ToString() + " loại";
+
+                lblCard3Title.Text = "Hàng đã hết";
+                lblCardLoiNhuan.Text = hetHang.ToString() + " loại";
+                lblCardLoiNhuan.ForeColor = hetHang > 0 ? Color.FromArgb(225, 29, 72) : Color.FromArgb(5, 150, 105);
+
+                lblCard4Title.Text = "Tổng số lượng tồn";
+                lblCardSoHoaDon.Text = totalTon.ToString("N0") + " cái";
+
+                int stt = 1;
+                _fullTonKhoList = list.Select(p => new TonKhoRow
+                {
+                    STT = stt++,
+                    MaSanPham = p.MaSanPham,
+                    TenSanPham = p.TenSanPham,
+                    TenDanhMuc = p.TenDanhMuc,
+                    SoLuongTon = p.SoLuongTon,
+                    MucTonToiThieu = p.MucTonToiThieu,
+                    CanNhapThem = Math.Max(0, p.MucTonToiThieu - p.SoLuongTon),
+                    TrangThai = p.TrangThaiDisplay
+                }).ToList();
+
+                _currentPage = 1;
+                RenderPage();
+            }
+            catch (Exception ex)
+            {
+                MessageBox.Show($"Lỗi tải dữ liệu tồn kho:\n{ex.Message}", "Lỗi", MessageBoxButtons.OK, MessageBoxIcon.Error);
+            }
+        }
+
+        private void LoadBanChayData()
+        {
+            try
+            {
+                using var conn = DatabaseHelper.GetConnection();
+                const string sql = @"
+                    SELECT
+                        sp.MaSanPham,
+                        sp.TenSanPham,
+                        ISNULL(dm.TenDanhMuc, N'Khác') AS TenDanhMuc,
+                        SUM(ct.SoLuong) AS TongDaBan,
+                        SUM(ct.ThanhTien) AS TongDoanhThu
+                    FROM ChiTietDonHang ct
+                    INNER JOIN DonHang dh ON ct.MaDonHang = dh.MaDonHang
+                    INNER JOIN SanPham sp ON ct.MaSanPham = sp.MaSanPham
+                    LEFT JOIN DanhMucSanPham dm ON sp.MaDanhMuc = dm.MaDanhMuc
+                    WHERE dh.TrangThaiDonHang IN ('Da xac nhan', 'Hoan tat')
+                    GROUP BY sp.MaSanPham, sp.TenSanPham, dm.TenDanhMuc
+                    ORDER BY SUM(ct.SoLuong) DESC";
+
+                using var cmd = new SqlCommand(sql, conn);
+                using var da = new SqlDataAdapter(cmd);
+                var dt = new DataTable();
+                da.Fill(dt);
+
+                var list = new List<BanChayRow>();
+                int rank = 1;
+                foreach (DataRow r in dt.Rows)
+                {
+                    list.Add(new BanChayRow
+                    {
+                        STT = rank++,
+                        MaSanPham = Convert.ToInt32(r["MaSanPham"]),
+                        TenSanPham = r["TenSanPham"]?.ToString() ?? "",
+                        TenDanhMuc = r["TenDanhMuc"]?.ToString() ?? "",
+                        TongDaBan = Convert.ToInt32(r["TongDaBan"]),
+                        TongDoanhThu = Convert.ToDecimal(r["TongDoanhThu"])
+                    });
+                }
+
+                int totalBan = list.Sum(x => x.TongDaBan);
+                decimal totalRev = list.Sum(x => x.TongDoanhThu);
+                string top1Name = list.Count > 0 ? list[0].TenSanPham : "Chưa có";
+
+                lblCard1Title.Text = "Tổng SP đã bán";
+                lblCardDoanhThu.Text = totalBan.ToString("N0") + " cái";
+
+                lblCard2Title.Text = "Doanh thu bán SP";
+                lblCardChiPhi.Text = totalRev.ToString("N0") + " đ";
+
+                lblCard3Title.Text = "Sản phẩm Top 1";
+                lblCardLoiNhuan.Text = top1Name;
+                lblCardLoiNhuan.ForeColor = Color.FromArgb(124, 58, 237);
+
+                lblCard4Title.Text = "Số loại SP đã bán";
+                lblCardSoHoaDon.Text = list.Count.ToString() + " loại";
+
+                _fullBanChayList = list;
+                _currentPage = 1;
+                RenderPage();
+            }
+            catch (Exception ex)
+            {
+                MessageBox.Show($"Lỗi tải dữ liệu SP bán chạy:\n{ex.Message}", "Lỗi", MessageBoxButtons.OK, MessageBoxIcon.Error);
+            }
+        }
+
+        private int GetCurrentTotalCount()
+        {
+            if (_loaiBaoCaoMode == "TonKho") return _fullTonKhoList.Count;
+            if (_loaiBaoCaoMode == "BanChay") return _fullBanChayList.Count;
+            return _fullDataList.Count;
+        }
+
         private void RenderPage()
+        {
+            if (_loaiBaoCaoMode == "TonKho") RenderTonKhoPage();
+            else if (_loaiBaoCaoMode == "BanChay") RenderBanChayPage();
+            else RenderDoanhThuPage();
+        }
+
+        private void RenderDoanhThuPage()
         {
             int totalCount = _fullDataList.Count;
             int totalPages = totalCount == 0 ? 1 : (int)Math.Ceiling((double)totalCount / PageSize);
@@ -1161,9 +1341,84 @@ namespace QuanLyBanMayVT
             if (dgvThongKe.Columns["LoiNhuan"] != null) dgvThongKe.Columns["LoiNhuan"].HeaderText = "Lợi nhuận";
             if (dgvThongKe.Columns["SoHoaDon"] != null) dgvThongKe.Columns["SoHoaDon"].HeaderText = "Số hóa đơn";
 
+            UpdatePaginationFooter(totalCount, totalPages, "ngày");
+        }
+
+        private void RenderTonKhoPage()
+        {
+            int totalCount = _fullTonKhoList.Count;
+            int totalPages = totalCount == 0 ? 1 : (int)Math.Ceiling((double)totalCount / PageSize);
+
+            if (_currentPage > totalPages) _currentPage = totalPages;
+            if (_currentPage < 1) _currentPage = 1;
+
+            var pageItems = _fullTonKhoList
+                .Skip((_currentPage - 1) * PageSize)
+                .Take(PageSize)
+                .ToList();
+
+            dgvThongKe.DataSource = pageItems.Select(x => new
+            {
+                x.STT,
+                x.MaSanPham,
+                x.TenSanPham,
+                x.TenDanhMuc,
+                x.SoLuongTon,
+                x.MucTonToiThieu,
+                x.CanNhapThem,
+                x.TrangThai
+            }).ToList();
+
+            if (dgvThongKe.Columns["STT"] != null) dgvThongKe.Columns["STT"].HeaderText = "STT";
+            if (dgvThongKe.Columns["MaSanPham"] != null) dgvThongKe.Columns["MaSanPham"].HeaderText = "Mã SP";
+            if (dgvThongKe.Columns["TenSanPham"] != null) dgvThongKe.Columns["TenSanPham"].HeaderText = "Tên Sản Phẩm";
+            if (dgvThongKe.Columns["TenDanhMuc"] != null) dgvThongKe.Columns["TenDanhMuc"].HeaderText = "Danh Mục";
+            if (dgvThongKe.Columns["SoLuongTon"] != null) dgvThongKe.Columns["SoLuongTon"].HeaderText = "Tồn Hiện Tại";
+            if (dgvThongKe.Columns["MucTonToiThieu"] != null) dgvThongKe.Columns["MucTonToiThieu"].HeaderText = "Mức Tối Thiểu";
+            if (dgvThongKe.Columns["CanNhapThem"] != null) dgvThongKe.Columns["CanNhapThem"].HeaderText = "Cần Nhập Thêm";
+            if (dgvThongKe.Columns["TrangThai"] != null) dgvThongKe.Columns["TrangThai"].HeaderText = "Trạng Thái";
+
+            UpdatePaginationFooter(totalCount, totalPages, "sản phẩm");
+        }
+
+        private void RenderBanChayPage()
+        {
+            int totalCount = _fullBanChayList.Count;
+            int totalPages = totalCount == 0 ? 1 : (int)Math.Ceiling((double)totalCount / PageSize);
+
+            if (_currentPage > totalPages) _currentPage = totalPages;
+            if (_currentPage < 1) _currentPage = 1;
+
+            var pageItems = _fullBanChayList
+                .Skip((_currentPage - 1) * PageSize)
+                .Take(PageSize)
+                .ToList();
+
+            dgvThongKe.DataSource = pageItems.Select(x => new
+            {
+                Top = $"Top {x.STT}",
+                x.MaSanPham,
+                x.TenSanPham,
+                x.TenDanhMuc,
+                TongDaBan = x.TongDaBan.ToString("N0") + " cái",
+                TongDoanhThu = x.TongDoanhThu.ToString("N0") + " đ"
+            }).ToList();
+
+            if (dgvThongKe.Columns["Top"] != null) dgvThongKe.Columns["Top"].HeaderText = "Thứ Hạng";
+            if (dgvThongKe.Columns["MaSanPham"] != null) dgvThongKe.Columns["MaSanPham"].HeaderText = "Mã SP";
+            if (dgvThongKe.Columns["TenSanPham"] != null) dgvThongKe.Columns["TenSanPham"].HeaderText = "Tên Sản Phẩm";
+            if (dgvThongKe.Columns["TenDanhMuc"] != null) dgvThongKe.Columns["TenDanhMuc"].HeaderText = "Danh Mục";
+            if (dgvThongKe.Columns["TongDaBan"] != null) dgvThongKe.Columns["TongDaBan"].HeaderText = "Đã Bán";
+            if (dgvThongKe.Columns["TongDoanhThu"] != null) dgvThongKe.Columns["TongDoanhThu"].HeaderText = "Tổng Doanh Thu";
+
+            UpdatePaginationFooter(totalCount, totalPages, "sản phẩm bán chạy");
+        }
+
+        private void UpdatePaginationFooter(int totalCount, int totalPages, string unitName)
+        {
             int startIdx = totalCount == 0 ? 0 : (_currentPage - 1) * PageSize + 1;
             int endIdx = Math.Min(_currentPage * PageSize, totalCount);
-            lblPageInfo.Text = $"Hiển thị {startIdx} - {endIdx} / Tổng {totalCount} ngày (Trang {_currentPage}/{totalPages})";
+            lblPageInfo.Text = $"Hiển thị {startIdx} - {endIdx} / Tổng {totalCount} {unitName} (Trang {_currentPage}/{totalPages})";
 
             btnPrev.Enabled = _currentPage > 1;
             btnNext.Enabled = _currentPage < totalPages;
@@ -1220,17 +1475,38 @@ namespace QuanLyBanMayVT
 
         private void DgvThongKe_CellFormatting(object? sender, DataGridViewCellFormattingEventArgs e)
         {
-            if (e.RowIndex >= 0 && dgvThongKe.Columns[e.ColumnIndex].Name == "LoiNhuan" && e.Value != null)
+            if (e.RowIndex < 0) return;
+
+            if (_loaiBaoCaoMode == "DoanhThu")
             {
-                string strVal = e.Value.ToString() ?? "";
-                if (strVal.StartsWith("-"))
+                if (dgvThongKe.Columns[e.ColumnIndex].Name == "LoiNhuan" && e.Value != null)
                 {
-                    e.CellStyle.ForeColor = Color.FromArgb(225, 29, 72); // Đỏ cho Lợi nhuận âm
+                    string strVal = e.Value.ToString() ?? "";
+                    e.CellStyle.ForeColor = strVal.StartsWith("-")
+                        ? Color.FromArgb(225, 29, 72)
+                        : Color.FromArgb(5, 150, 105);
                     e.CellStyle.Font = new Font("Segoe UI", 9.5F, FontStyle.Bold);
                 }
-                else
+            }
+            else if (_loaiBaoCaoMode == "TonKho")
+            {
+                if (dgvThongKe.Columns[e.ColumnIndex].Name == "CanNhapThem" && e.Value != null)
                 {
-                    e.CellStyle.ForeColor = Color.FromArgb(5, 150, 105); // Xanh cho Lợi nhuận dương
+                    if (int.TryParse(e.Value.ToString(), out int val) && val > 0)
+                    {
+                        e.CellStyle.ForeColor = Color.FromArgb(225, 29, 72);
+                        e.CellStyle.Font = new Font("Segoe UI", 9.5F, FontStyle.Bold);
+                    }
+                }
+            }
+            else if (_loaiBaoCaoMode == "BanChay")
+            {
+                if (dgvThongKe.Columns[e.ColumnIndex].Name == "Top" && e.Value != null)
+                {
+                    string topStr = e.Value.ToString() ?? "";
+                    if (topStr == "Top 1") e.CellStyle.ForeColor = Color.FromArgb(217, 119, 6);
+                    else if (topStr == "Top 2") e.CellStyle.ForeColor = Color.FromArgb(37, 99, 235);
+                    else if (topStr == "Top 3") e.CellStyle.ForeColor = Color.FromArgb(124, 58, 237);
                     e.CellStyle.Font = new Font("Segoe UI", 9.5F, FontStyle.Bold);
                 }
             }
@@ -1241,7 +1517,7 @@ namespace QuanLyBanMayVT
             using var sfd = new SaveFileDialog
             {
                 Filter = "File CSV (*.csv)|*.csv",
-                FileName = $"ThongKe_BaoCao_{DateTime.Now:yyyyMMdd}.csv"
+                FileName = $"BaoCao_{_loaiBaoCaoMode}_{DateTime.Now:yyyyMMdd}.csv"
             };
 
             if (sfd.ShowDialog() == DialogResult.OK)
@@ -1249,20 +1525,24 @@ namespace QuanLyBanMayVT
                 try
                 {
                     var sb = new System.Text.StringBuilder();
-                    sb.AppendLine("STT,Ngay,DoanhThu,ChiPhi,LoiNhuan,SoHoaDon");
+                    // Append headers
+                    var colHeaders = new List<string>();
+                    foreach (DataGridViewColumn col in dgvThongKe.Columns) colHeaders.Add(col.HeaderText);
+                    sb.AppendLine(string.Join(",", colHeaders));
+
                     foreach (DataGridViewRow row in dgvThongKe.Rows)
                     {
                         if (row.IsNewRow) continue;
-                        string stt = row.Cells["STT"].Value?.ToString() ?? "";
-                        string ngay = row.Cells["Ngay"].Value?.ToString() ?? "";
-                        string dt = row.Cells["DoanhThu"].Value?.ToString()?.Replace(" đ", "").Replace(",", "") ?? "0";
-                        string cp = row.Cells["ChiPhi"].Value?.ToString()?.Replace(" đ", "").Replace(",", "") ?? "0";
-                        string ln = row.Cells["LoiNhuan"].Value?.ToString()?.Replace(" đ", "").Replace(",", "") ?? "0";
-                        string shd = row.Cells["SoHoaDon"].Value?.ToString() ?? "0";
-                        sb.AppendLine($"{stt},{ngay},{dt},{cp},{ln},{shd}");
+                        var rowVals = new List<string>();
+                        foreach (DataGridViewColumn col in dgvThongKe.Columns)
+                        {
+                            string val = row.Cells[col.Index].Value?.ToString()?.Replace(",", "") ?? "";
+                            rowVals.Add($"\"{val}\"");
+                        }
+                        sb.AppendLine(string.Join(",", rowVals));
                     }
                     System.IO.File.WriteAllText(sfd.FileName, sb.ToString(), System.Text.Encoding.UTF8);
-                    MessageBox.Show("Đã xuất báo cáo thống kê thành công!", "Thông báo", MessageBoxButtons.OK, MessageBoxIcon.Information);
+                    MessageBox.Show("Đã xuất báo cáo thành công!", "Thông báo", MessageBoxButtons.OK, MessageBoxIcon.Information);
                 }
                 catch (Exception ex)
                 {

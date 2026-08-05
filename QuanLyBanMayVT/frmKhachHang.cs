@@ -21,6 +21,7 @@ namespace QuanLyBanMayVT
         private FlowLayoutPanel pnlSubLinhKien = null!;
         private Button? _selectedSubBtn = null;
         private List<DanhMucSanPham> _dmList = new();
+        private Button btnXemGio = null!;
 
         // ── Tab Đơn Hàng ────────────────────────────────────────────
         private DataGridView dgvDonHang = null!;
@@ -203,11 +204,49 @@ namespace QuanLyBanMayVT
             txtTimKiem.TextChanged += (s, e) => TaiDanhSachSanPham();
             tblSearch.Controls.Add(txtTimKiem, 1, 0);
 
+            var flowCartBtns = new FlowLayoutPanel
+            {
+                AutoSize = true,
+                FlowDirection = FlowDirection.LeftToRight,
+                WrapContents = false,
+                Margin = new Padding(0)
+            };
+
+            var btnThemGio = new Button
+            {
+                Text = "🛒 Thêm vào Giỏ hàng",
+                AutoSize = true,
+                Padding = new Padding(12, 5, 12, 5),
+                Margin = new Padding(0, 0, 8, 0),
+                BackColor = Color.FromArgb(124, 58, 237),
+                ForeColor = Color.White,
+                FlatStyle = FlatStyle.Flat,
+                Font = new Font("Segoe UI", 9.5F, FontStyle.Bold),
+                Cursor = Cursors.Hand
+            };
+            btnThemGio.FlatAppearance.BorderSize = 0;
+            btnThemGio.Click += BtnThemGio_Click;
+
+            btnXemGio = new Button
+            {
+                Text = "🛍️ Giỏ hàng",
+                AutoSize = true,
+                Padding = new Padding(12, 5, 12, 5),
+                Margin = new Padding(0, 0, 8, 0),
+                BackColor = Color.FromArgb(71, 85, 105),
+                ForeColor = Color.White,
+                FlatStyle = FlatStyle.Flat,
+                Font = new Font("Segoe UI", 9.5F, FontStyle.Bold),
+                Cursor = Cursors.Hand
+            };
+            btnXemGio.FlatAppearance.BorderSize = 0;
+            btnXemGio.Click += BtnXemGioHang_Click;
+
             var btnDH = new Button
             {
-                Text = "🛒  Đặt mua SP đã chọn",
+                Text = "⚡ Đặt ngay",
                 AutoSize = true,
-                Padding = new Padding(14, 5, 14, 5),
+                Padding = new Padding(12, 5, 12, 5),
                 BackColor = UIStyleHelper.PrimaryBlue,
                 ForeColor = Color.White,
                 FlatStyle = FlatStyle.Flat,
@@ -216,7 +255,12 @@ namespace QuanLyBanMayVT
             };
             btnDH.FlatAppearance.BorderSize = 0;
             btnDH.Click += BtnDatHang_Click;
-            tblSearch.Controls.Add(btnDH, 2, 0);
+
+            flowCartBtns.Controls.Add(btnThemGio);
+            flowCartBtns.Controls.Add(btnXemGio);
+            flowCartBtns.Controls.Add(btnDH);
+
+            tblSearch.Controls.Add(flowCartBtns, 2, 0);
 
             // 2. Card danh mục chính (Gọn gàng 7 card)
             var pnlCats = new Panel
@@ -460,6 +504,48 @@ namespace QuanLyBanMayVT
             return name.Contains("pc ") || name.Contains("máy tính") || name.Contains("laptop") || name.Contains("workstation");
         }
 
+        private void BtnThemGio_Click(object? sender, EventArgs e)
+        {
+            if (dgvSanPham.CurrentRow == null)
+            {
+                MessageBox.Show("Vui lòng chọn sản phẩm.", "Thông báo", MessageBoxButtons.OK, MessageBoxIcon.Warning);
+                return;
+            }
+            int maSP = (int)dgvSanPham.CurrentRow.Cells["MaSanPham"].Value;
+            var sp = new SanPhamDAO().GetById(maSP);
+            if (sp == null || sp.SoLuongTon <= 0)
+            {
+                MessageBox.Show("Sản phẩm đã hết hàng.", "Thông báo", MessageBoxButtons.OK, MessageBoxIcon.Warning);
+                return;
+            }
+
+            GioHangManager.ThemVaoGio(sp, 1);
+            CapNhatBtnGioHang();
+            MessageBox.Show($"🛒 Đã thêm '{sp.TenSanPham}' vào Giỏ hàng!", "Giỏ hàng", MessageBoxButtons.OK, MessageBoxIcon.Information);
+        }
+
+        private void BtnXemGioHang_Click(object? sender, EventArgs e)
+        {
+            if (_khachHangCurrent == null) return;
+            using var dlg = new frmGioHang(_khachHangCurrent);
+            if (dlg.ShowDialog() == DialogResult.OK)
+            {
+                TaiDanhSachSanPham();
+                TaiLichSuDonHang();
+            }
+            CapNhatBtnGioHang();
+        }
+
+        private void CapNhatBtnGioHang()
+        {
+            int count = GioHangManager.TongSoLuong;
+            if (btnXemGio != null)
+            {
+                btnXemGio.Text = count > 0 ? $"🛍️ Giỏ hàng ({count})" : "🛍️ Giỏ hàng";
+                btnXemGio.BackColor = count > 0 ? Color.FromArgb(16, 185, 129) : Color.FromArgb(71, 85, 105);
+            }
+        }
+
         private void BtnDatHang_Click(object? sender, EventArgs e)
         {
             if (dgvSanPham.CurrentRow == null)
@@ -622,17 +708,44 @@ namespace QuanLyBanMayVT
 
             if (!dgvDonHang.Columns.Contains("colXemChiTiet"))
             {
-                var btnCol = new DataGridViewButtonColumn
+                var btnCol1 = new DataGridViewButtonColumn
                 {
                     Name = "colXemChiTiet",
-                    HeaderText = "Thao Tác",
-                    Text = "🔍 Xem Chi Tiết",
+                    HeaderText = "Chi Tiết",
+                    Text = "🔍 Chi tiết",
                     UseColumnTextForButtonValue = true,
                     AutoSizeMode = DataGridViewAutoSizeColumnMode.None,
-                    Width = 140,
-                    FlatStyle = FlatStyle.Flat
+                    Width = 100,
+                    HeaderCell = { Style = { Alignment = DataGridViewContentAlignment.MiddleCenter } },
+                    DefaultCellStyle = { Alignment = DataGridViewContentAlignment.MiddleCenter }
                 };
-                dgvDonHang.Columns.Add(btnCol);
+                dgvDonHang.Columns.Add(btnCol1);
+
+                var btnCol2 = new DataGridViewButtonColumn
+                {
+                    Name = "colHuyDon",
+                    HeaderText = "Hủy Đơn",
+                    Text = "❌ Hủy",
+                    UseColumnTextForButtonValue = true,
+                    AutoSizeMode = DataGridViewAutoSizeColumnMode.None,
+                    Width = 90,
+                    HeaderCell = { Style = { Alignment = DataGridViewContentAlignment.MiddleCenter } },
+                    DefaultCellStyle = { Alignment = DataGridViewContentAlignment.MiddleCenter }
+                };
+                dgvDonHang.Columns.Add(btnCol2);
+
+                var btnCol3 = new DataGridViewButtonColumn
+                {
+                    Name = "colDatLai",
+                    HeaderText = "Mua Lại",
+                    Text = "🔄 Đặt lại",
+                    UseColumnTextForButtonValue = true,
+                    AutoSizeMode = DataGridViewAutoSizeColumnMode.None,
+                    Width = 90,
+                    HeaderCell = { Style = { Alignment = DataGridViewContentAlignment.MiddleCenter } },
+                    DefaultCellStyle = { Alignment = DataGridViewContentAlignment.MiddleCenter }
+                };
+                dgvDonHang.Columns.Add(btnCol3);
             }
 
             int startIdx = totalCount == 0 ? 0 : (_currentOrderPage - 1) * OrderPageSize + 1;
@@ -694,9 +807,51 @@ namespace QuanLyBanMayVT
 
         private void DgvDonHang_CellContentClick(object? sender, DataGridViewCellEventArgs e)
         {
-            if (e.RowIndex >= 0 && e.ColumnIndex >= 0 && dgvDonHang.Columns[e.ColumnIndex].Name == "colXemChiTiet")
+            if (e.RowIndex < 0 || e.ColumnIndex < 0 || dgvDonHang.CurrentRow == null) return;
+            string colName = dgvDonHang.Columns[e.ColumnIndex].Name;
+            int maDH = (int)dgvDonHang.Rows[e.RowIndex].Cells["MaDonHang"].Value;
+
+            if (colName == "colXemChiTiet")
             {
                 MoPopupChiTietDonHangSelected();
+            }
+            else if (colName == "colHuyDon")
+            {
+                var dh = new DonHangDAO().GetById(maDH);
+                if (dh == null) return;
+
+                if (dh.TrangThaiDonHang != "Cho xac nhan")
+                {
+                    MessageBox.Show($"Đơn hàng #{maDH} đang ở trạng thái '{dh.TrangThaiDisplay}', không thể hủy được nữa.", "Thông báo", MessageBoxButtons.OK, MessageBoxIcon.Warning);
+                    return;
+                }
+
+                if (MessageBox.Show($"Bạn có chắc chắn muốn HỦY đơn hàng #{maDH}?", "Xác nhận hủy đơn hàng", MessageBoxButtons.YesNo, MessageBoxIcon.Question) == DialogResult.Yes)
+                {
+                    if (new DonHangDAO().HuyDonHang(maDH))
+                    {
+                        MessageBox.Show($"Đã hủy thành công đơn hàng #{maDH}!", "Thành công", MessageBoxButtons.OK, MessageBoxIcon.Information);
+                        TaiLichSuDonHang();
+                    }
+                }
+            }
+            else if (colName == "colDatLai")
+            {
+                if (new DonHangDAO().DatLaiDonHang(maDH))
+                {
+                    CapNhatBtnGioHang();
+                    MessageBox.Show($"🎉 Đã sao chép toàn bộ sản phẩm từ Đơn hàng #{maDH} vào Giỏ hàng!", "Thông báo", MessageBoxButtons.OK, MessageBoxIcon.Information);
+                    if (_khachHangCurrent != null)
+                    {
+                        using var dlg = new frmGioHang(_khachHangCurrent);
+                        if (dlg.ShowDialog() == DialogResult.OK)
+                        {
+                            TaiDanhSachSanPham();
+                            TaiLichSuDonHang();
+                        }
+                        CapNhatBtnGioHang();
+                    }
+                }
             }
         }
 

@@ -40,7 +40,7 @@ namespace QuanLyBanMayVT.DataAccess
                     where.Add("sp.TrangThai = 'Con hang' AND sp.SoLuongTon > 0");
 
                 string sql = SelectJoin + (where.Count > 0 ? " WHERE " + string.Join(" AND ", where) : "")
-                             + " ORDER BY sp.TenSanPham";
+                             + " ORDER BY sp.MaSanPham";
                 using var cmd = new SqlCommand(sql, conn);
                 if (!string.IsNullOrWhiteSpace(keyword))
                     cmd.Parameters.AddWithValue("@kw", $"%{keyword}%");

@@ -92,7 +92,7 @@ namespace QuanLyBanMayVT.DataAccess
                 const string sql = @"
                     SELECT MaKhachHang, HoTen, Email, SoDienThoai, DiaChi, MaTaiKhoan
                     FROM   KhachHang
-                    ORDER BY HoTen";
+                    ORDER BY MaKhachHang";
 
                 using var cmd    = new SqlCommand(sql, conn);
                 using var reader = cmd.ExecuteReader();

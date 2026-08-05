@@ -1,0 +1,265 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1600 1450" width="1600" height="1450" style="background-color: #0f172a; font-family: 'Segoe UI', Arial, sans-serif;">
+  <defs>
+    <!-- Gradients -->
+    <linearGradient id="headerGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#1e293b"/>
+      <stop offset="100%" stop-color="#0f172a"/>
+    </linearGradient>
+    
+    <linearGradient id="actorGrad" x1="0%" y1="0%" x2="0%" y2="100%">
+      <stop offset="0%" stop-color="#3b82f6"/>
+      <stop offset="100%" stop-color="#1d4ed8"/>
+    </linearGradient>
+
+    <linearGradient id="uiGrad" x1="0%" y1="0%" x2="0%" y2="100%">
+      <stop offset="0%" stop-color="#8b5cf6"/>
+      <stop offset="100%" stop-color="#6d28d9"/>
+    </linearGradient>
+
+    <linearGradient id="daoGrad" x1="0%" y1="0%" x2="0%" y2="100%">
+      <stop offset="0%" stop-color="#10b981"/>
+      <stop offset="100%" stop-color="#047857"/>
+    </linearGradient>
+
+    <linearGradient id="dbGrad" x1="0%" y1="0%" x2="0%" y2="100%">
+      <stop offset="0%" stop-color="#f59e0b"/>
+      <stop offset="100%" stop-color="#b45309"/>
+    </linearGradient>
+
+    <linearGradient id="targetGrad" x1="0%" y1="0%" x2="0%" y2="100%">
+      <stop offset="0%" stop-color="#ec4899"/>
+      <stop offset="100%" stop-color="#be185d"/>
+    </linearGradient>
+
+    <linearGradient id="section1Grad" x1="0%" y1="0%" x2="100%" y2="0%">
+      <stop offset="0%" stop-color="rgba(139, 92, 246, 0.15)"/>
+      <stop offset="100%" stop-color="rgba(15, 23, 42, 0.0)"/>
+    </linearGradient>
+
+    <linearGradient id="section2Grad" x1="0%" y1="0%" x2="100%" y2="0%">
+      <stop offset="0%" stop-color="rgba(16, 185, 129, 0.15)"/>
+      <stop offset="100%" stop-color="rgba(15, 23, 42, 0.0)"/>
+    </linearGradient>
+
+    <linearGradient id="section3Grad" x1="0%" y1="0%" x2="100%" y2="0%">
+      <stop offset="0%" stop-color="rgba(59, 130, 246, 0.15)"/>
+      <stop offset="100%" stop-color="rgba(15, 23, 42, 0.0)"/>
+    </linearGradient>
+
+    <linearGradient id="section4Grad" x1="0%" y1="0%" x2="100%" y2="0%">
+      <stop offset="0%" stop-color="rgba(236, 72, 153, 0.15)"/>
+      <stop offset="100%" stop-color="rgba(15, 23, 42, 0.0)"/>
+    </linearGradient>
+
+    <!-- Drop Shadows -->
+    <filter id="shadow" x="-10%" y="-10%" width="120%" height="120%">
+      <feDropShadow dx="0" dy="4" stdDeviation="6" flood-color="#000" flood-opacity="0.4"/>
+    </filter>
+
+    <!-- Arrow Markers -->
+    <marker id="arrow-solid" viewBox="0 0 10 10" refX="10" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
+      <path d="M 0 1 L 10 5 L 0 9 z" fill="#60a5fa"/>
+    </marker>
+
+    <marker id="arrow-purple" viewBox="0 0 10 10" refX="10" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
+      <path d="M 0 1 L 10 5 L 0 9 z" fill="#a78bfa"/>
+    </marker>
+
+    <marker id="arrow-green" viewBox="0 0 10 10" refX="10" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
+      <path d="M 0 1 L 10 5 L 0 9 z" fill="#34d399"/>
+    </marker>
+
+    <marker id="arrow-amber" viewBox="0 0 10 10" refX="10" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
+      <path d="M 0 1 L 10 5 L 0 9 z" fill="#fbbf24"/>
+    </marker>
+
+    <marker id="arrow-dash" viewBox="0 0 10 10" refX="10" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
+      <path d="M 0 1 L 10 5 L 0 9 z" fill="#94a3b8"/>
+    </marker>
+  </defs>
+
+  <!-- Title Banner -->
+  <rect x="40" y="25" width="1520" height="70" rx="12" fill="url(#headerGrad)" stroke="#334155" stroke-width="1.5" filter="url(#shadow)"/>
+  <text x="800" y="58" text-anchor="middle" fill="#f8fafc" font-size="22" font-weight="bold" letter-spacing="1">SƠ ĐỒ TRÌNH TỰ NGHIỆP VỤ — ROLE NHÂN VIÊN BÁN HÀNG (IsNVBanHang)</text>
+  <text x="800" y="80" text-anchor="middle" fill="#94a3b8" font-size="13">QUY TRÌNH ĐỀ XUẤT SẢN PHẨM MỚI, QUẢN LÝ TỒN KHO &amp; XÁC NHẬN ĐƠN HÀNG</text>
+
+  <!-- Participant Lifelines -->
+  <!-- X Coordinates:
+       1. Nhân viên Bán hàng (Sales Staff): 180
+       2. Màn hình Hàng hóa (frmSanPham): 460
+       3. Màn hình Tồn kho (frmTonKho): 720
+       4. Màn hình Đơn hàng (frmDonHang): 980
+       5. DAO Layer (Logic CSDL): 1240
+       6. SQL Server Database: 1460
+  -->
+
+  <!-- Lifeline Vertical Lines -->
+  <line x1="180" y1="170" x2="180" y2="1360" stroke="#334155" stroke-width="2" stroke-dasharray="6,6"/>
+  <line x1="460" y1="170" x2="460" y2="1360" stroke="#334155" stroke-width="2" stroke-dasharray="6,6"/>
+  <line x1="720" y1="170" x2="720" y2="1360" stroke="#334155" stroke-width="2" stroke-dasharray="6,6"/>
+  <line x1="980" y1="170" x2="980" y2="1360" stroke="#334155" stroke-width="2" stroke-dasharray="6,6"/>
+  <line x1="1240" y1="170" x2="1240" y2="1360" stroke="#334155" stroke-width="2" stroke-dasharray="6,6"/>
+  <line x1="1460" y1="170" x2="1460" y2="1360" stroke="#334155" stroke-width="2" stroke-dasharray="6,6"/>
+
+  <!-- Top Participant Header Boxes -->
+  <g filter="url(#shadow)">
+    <!-- Staff -->
+    <rect x="90" y="115" width="180" height="50" rx="8" fill="url(#actorGrad)" stroke="#60a5fa" stroke-width="1.5"/>
+    <text x="180" y="145" text-anchor="middle" fill="#ffffff" font-size="14" font-weight="bold">👤 NV Bán Hàng</text>
+
+    <!-- frmSanPham -->
+    <rect x="370" y="115" width="180" height="50" rx="8" fill="url(#uiGrad)" stroke="#c084fc" stroke-width="1.5"/>
+    <text x="460" y="145" text-anchor="middle" fill="#ffffff" font-size="14" font-weight="bold">📦 Form Hàng Hóa</text>
+
+    <!-- frmTonKho -->
+    <rect x="630" y="115" width="180" height="50" rx="8" fill="url(#uiGrad)" stroke="#c084fc" stroke-width="1.5"/>
+    <text x="720" y="145" text-anchor="middle" fill="#ffffff" font-size="14" font-weight="bold">🏭 Form Tồn Kho</text>
+
+    <!-- frmDonHang -->
+    <rect x="890" y="115" width="180" height="50" rx="8" fill="url(#uiGrad)" stroke="#c084fc" stroke-width="1.5"/>
+    <text x="980" y="145" text-anchor="middle" fill="#ffffff" font-size="14" font-weight="bold">📋 Form Đơn Hàng</text>
+
+    <!-- DAO -->
+    <rect x="1150" y="115" width="180" height="50" rx="8" fill="url(#daoGrad)" stroke="#34d399" stroke-width="1.5"/>
+    <text x="1240" y="145" text-anchor="middle" fill="#ffffff" font-size="14" font-weight="bold">⚙️ DAO Services</text>
+
+    <!-- Database -->
+    <rect x="1380" y="115" width="160" height="50" rx="8" fill="url(#dbGrad)" stroke="#fbbf24" stroke-width="1.5"/>
+    <text x="1460" y="145" text-anchor="middle" fill="#ffffff" font-size="14" font-weight="bold">🗄️ SQL Database</text>
+  </g>
+
+  <!-- ========================================================================================= -->
+  <!-- LUỒNG 1: ĐỀ XUẤT SẢN PHẨM MỚI GỬI QUẢN LÝ KIỂM DUYỆT -->
+  <!-- ========================================================================================= -->
+
+  <rect x="50" y="185" width="1500" height="280" rx="10" fill="url(#section1Grad)" stroke="#581c87" stroke-width="1" stroke-dasharray="4,4"/>
+  <rect x="60" y="195" width="460" height="26" rx="5" fill="#581c87"/>
+  <text x="70" y="213" fill="#d8b4fe" font-size="13" font-weight="bold">LUỒNG 1: LẬP ĐỀ XUẤT MÔN HÀNG / SẢN PHẨM MỚI GỬI QUẢN LÝ DUYỆT</text>
+
+  <!-- 1.1 Click propose button -->
+  <line x1="180" y1="240" x2="460" y2="240" stroke="#60a5fa" stroke-width="2" marker-end="url(#arrow-solid)"/>
+  <text x="320" y="233" text-anchor="middle" fill="#93c5fd" font-size="12">1. Bấm nút [💡 Đề xuất SP mới]</text>
+
+  <path d="M 460 240 Q 510 240 510 255 T 460 270" fill="none" stroke="#a78bfa" stroke-width="1.5" marker-end="url(#arrow-purple)"/>
+  <text x="520" y="260" fill="#c084fc" font-size="11">Hiển thị Modal Form [frmDeXuatSanPham]</text>
+
+  <!-- 1.2 Fill & submit proposal -->
+  <line x1="180" y1="300" x2="460" y2="300" stroke="#60a5fa" stroke-width="2" marker-end="url(#arrow-solid)"/>
+  <text x="320" y="293" text-anchor="middle" fill="#93c5fd" font-size="12">2. Nhập thông tin SP, Giá đề xuất, Lý do -&gt; Bấm [🚀 Gửi đề xuất]</text>
+
+  <line x1="460" y1="330" x2="1240" y2="330" stroke="#34d399" stroke-width="2" marker-end="url(#arrow-green)"/>
+  <text x="850" y="323" text-anchor="middle" fill="#6ee7b7" font-size="12">3. YeuCauThemSanPhamDAO.InsertDeXuat(yc)</text>
+
+  <line x1="1240" y1="360" x2="1460" y2="360" stroke="#fbbf24" stroke-width="2" marker-end="url(#arrow-amber)"/>
+  <text x="1350" y="353" text-anchor="middle" fill="#fde047" font-size="12">4. INSERT YeuCauThemSanPham (TrangThai = 'Cho duyet')</text>
+
+  <path d="M 1240 360 Q 1300 375 1300 390 T 1240 405" fill="none" stroke="#34d399" stroke-width="1.5" marker-end="url(#arrow-green)"/>
+  <text x="1310" y="388" fill="#6ee7b7" font-size="11">ThongBaoDAO.GuiThongBaoChoBanQuanLy("💡 Đề xuất SP mới")</text>
+
+  <line x1="1240" y1="435" x2="180" y2="435" stroke="#94a3b8" stroke-width="1.5" stroke-dasharray="4,4" marker-end="url(#arrow-dash)"/>
+  <text x="710" y="428" text-anchor="middle" fill="#cbd5e1" font-size="11">Thông báo gửi đề xuất thành công &amp; Đã chuyển tới Ban Quản Lý kiểm duyệt</text>
+
+
+  <!-- ========================================================================================= -->
+  <!-- LUỒNG 2: XEM TỒN KHO & ĐIỀU CHỈNH SỐ LƯỢNG TỒN KHO -->
+  <!-- ========================================================================================= -->
+
+  <rect x="50" y="485" width="1500" height="270" rx="10" fill="url(#section2Grad)" stroke="#064e3b" stroke-width="1" stroke-dasharray="4,4"/>
+  <rect x="60" y="495" width="480" height="26" rx="5" fill="#064e3b"/>
+  <text x="70" y="513" fill="#6ee7b7" font-size="13" font-weight="bold">LUỒNG 2: KIỂM TRA TỒN KHO SẢN PHẨM &amp; ĐIỀU CHỈNH SỐ LƯỢNG KHO</text>
+
+  <!-- 2.1 Access inventory form -->
+  <line x1="180" y1="540" x2="720" y2="540" stroke="#60a5fa" stroke-width="2" marker-end="url(#arrow-solid)"/>
+  <text x="450" y="533" text-anchor="middle" fill="#93c5fd" font-size="12">1. Chọn tab [Tồn kho] trên Menu Sidebar -&gt; Mở [frmTonKho]</text>
+
+  <line x1="720" y1="570" x2="1240" y2="570" stroke="#34d399" stroke-width="2" marker-end="url(#arrow-green)"/>
+  <text x="980" y="563" text-anchor="middle" fill="#6ee7b7" font-size="12">2. SanPhamDAO.GetAll() (ORDER BY MaSanPham)</text>
+
+  <!-- 2.2 Select & Adjust Stock -->
+  <line x1="180" y1="610" x2="720" y2="610" stroke="#60a5fa" stroke-width="2" marker-end="url(#arrow-solid)"/>
+  <text x="450" y="603" text-anchor="middle" fill="#93c5fd" font-size="12">3. Chọn dòng SP -&gt; Thay đổi số lượng [numSoLuongTon] -&gt; Bấm [💾 Cập nhật tồn kho]</text>
+
+  <line x1="720" y1="640" x2="1240" y2="640" stroke="#34d399" stroke-width="2" marker-end="url(#arrow-green)"/>
+  <text x="980" y="633" text-anchor="middle" fill="#6ee7b7" font-size="12">4. SanPhamDAO.CapNhatSoLuongTon(maSP, delta)</text>
+
+  <line x1="1240" y1="670" x2="1460" y2="670" stroke="#fbbf24" stroke-width="2" marker-end="url(#arrow-amber)"/>
+  <text x="1350" y="663" text-anchor="middle" fill="#fde047" font-size="12">5. UPDATE SanPham SET SoLuongTon = @SoLuongTonMoi</text>
+
+  <line x1="1240" y1="715" x2="720" y2="715" stroke="#94a3b8" stroke-width="1.5" stroke-dasharray="4,4" marker-end="url(#arrow-dash)"/>
+  <text x="980" y="708" text-anchor="middle" fill="#cbd5e1" font-size="11">Cập nhật số lượng tồn kho thành công &amp; Render lại phân trang (10 SP/trang)</text>
+
+
+  <!-- ========================================================================================= -->
+  <!-- LUỒNG 3: XEM & XÁC NHẬN ĐƠN HÀNG CỦA KHÁCH HÀNG -->
+  <!-- ========================================================================================= -->
+
+  <rect x="50" y="775" width="1500" height="290" rx="10" fill="url(#section3Grad)" stroke="#1e3a8a" stroke-width="1" stroke-dasharray="4,4"/>
+  <rect x="60" y="785" width="480" height="26" rx="5" fill="#1e3a8a"/>
+  <text x="70" y="803" fill="#93c5fd" font-size="13" font-weight="bold">LUỒNG 3: XỬ LÝ &amp; XÁC NHẬN ĐƠN HÀNG TỪ KHÁCH HÀNG CHUYỂN KẾ TOÁN</text>
+
+  <!-- 3.1 Open order list -->
+  <line x1="180" y1="830" x2="980" y2="830" stroke="#60a5fa" stroke-width="2" marker-end="url(#arrow-solid)"/>
+  <text x="580" y="823" text-anchor="middle" fill="#93c5fd" font-size="12">1. Chọn tab [Đơn hàng] -&gt; Lọc đơn [Cho xac nhan]</text>
+
+  <line x1="980" y1="860" x2="1240" y2="860" stroke="#34d399" stroke-width="2" marker-end="url(#arrow-green)"/>
+  <text x="1110" y="853" text-anchor="middle" fill="#6ee7b7" font-size="12">2. DonHangDAO.GetAll("Cho xac nhan")</text>
+
+  <!-- 3.2 View & Confirm Order -->
+  <line x1="180" y1="900" x2="980" y2="900" stroke="#60a5fa" stroke-width="2" marker-end="url(#arrow-solid)"/>
+  <text x="580" y="893" text-anchor="middle" fill="#93c5fd" font-size="12">3. Xem chi tiết đơn [frmChiTietDonHangDialog] -&gt; Bấm [✅ Xác nhận đơn hàng]</text>
+
+  <line x1="980" y1="930" x2="1240" y2="930" stroke="#34d399" stroke-width="2" marker-end="url(#arrow-green)"/>
+  <text x="1110" y="923" text-anchor="middle" fill="#6ee7b7" font-size="12">4. DonHangDAO.XacNhanDonHang(maDonHang)</text>
+
+  <line x1="1240" y1="960" x2="1460" y2="960" stroke="#fbbf24" stroke-width="2" marker-end="url(#arrow-amber)"/>
+  <text x="1350" y="953" text-anchor="middle" fill="#fde047" font-size="12">5. UPDATE DonHang SET TrangThaiDonHang = 'Da xac nhan'</text>
+
+  <path d="M 1240 960 Q 1300 975 1300 990 T 1240 1005" fill="none" stroke="#34d399" stroke-width="1.5" marker-end="url(#arrow-green)"/>
+  <text x="1310" y="995" fill="#6ee7b7" font-size="11">GuiThongBaoChoKhachHang("Đơn hàng #ID đã được xác nhận")</text>
+
+  <line x1="1240" y1="1035" x2="180" y2="1035" stroke="#94a3b8" stroke-width="1.5" stroke-dasharray="4,4" marker-end="url(#arrow-dash)"/>
+  <text x="710" y="1028" text-anchor="middle" fill="#cbd5e1" font-size="11">Xác nhận thành công &amp; Đơn chuyển sang Bộ phận Kế toán để lập hóa đơn</text>
+
+
+  <!-- ========================================================================================= -->
+  <!-- LUỒNG 4: TRA CỨU CHI TIẾT SẢN PHẨM Ở CHẾ ĐỘ READ-ONLY -->
+  <!-- ========================================================================================= -->
+
+  <rect x="50" y="1085" width="1500" height="230" rx="10" fill="url(#section4Grad)" stroke="#9d174d" stroke-width="1" stroke-dasharray="4,4"/>
+  <rect x="60" y="1095" width="480" height="26" rx="5" fill="#9d174d"/>
+  <text x="70" y="1113" fill="#fbcfe8" font-size="13" font-weight="bold">LUỒNG 4: TRA CỨU CHI TIẾT SẢN PHẨM CHẾ ĐỘ READ-ONLY (CHỈ XEM)</text>
+
+  <line x1="180" y1="1145" x2="460" y2="1145" stroke="#60a5fa" stroke-width="2" marker-end="url(#arrow-solid)"/>
+  <text x="320" y="1138" text-anchor="middle" fill="#93c5fd" font-size="12">1. Double-click dòng sản phẩm trong bảng Hàng hóa [frmSanPham]</text>
+
+  <line x1="460" y1="1175" x2="1240" y2="1175" stroke="#34d399" stroke-width="2" marker-end="url(#arrow-green)"/>
+  <text x="850" y="1168" text-anchor="middle" fill="#6ee7b7" font-size="12">2. SanPhamDAO.GetById(maSP)</text>
+
+  <path d="M 460 1175 Q 510 1190 510 1205 T 460 1220" fill="none" stroke="#a78bfa" stroke-width="1.5" marker-end="url(#arrow-purple)"/>
+  <text x="520" y="1203" fill="#c084fc" font-size="11">Mở Form [frmEditSanPham(sp, isReadOnly: true)]</text>
+
+  <line x1="460" y1="1265" x2="180" y2="1265" stroke="#94a3b8" stroke-width="1.5" stroke-dasharray="4,4" marker-end="url(#arrow-dash)"/>
+  <text x="320" y="1258" text-anchor="middle" fill="#cbd5e1" font-size="11">Hiển thị Cửa sổ Read-Only (Khóa ô nhập liệu, ẩn Cập nhật, chỉ bấm Đóng)</text>
+
+
+  <!-- Bottom Participant Footer Boxes -->
+  <g filter="url(#shadow)">
+    <rect x="90" y="1380" width="180" height="40" rx="8" fill="url(#actorGrad)" stroke="#60a5fa" stroke-width="1.5"/>
+    <text x="180" y="1405" text-anchor="middle" fill="#ffffff" font-size="13" font-weight="bold">👤 NV Bán Hàng</text>
+
+    <rect x="370" y="1380" width="180" height="40" rx="8" fill="url(#uiGrad)" stroke="#c084fc" stroke-width="1.5"/>
+    <text x="460" y="1405" text-anchor="middle" fill="#ffffff" font-size="13" font-weight="bold">📦 Form Hàng Hóa</text>
+
+    <rect x="630" y="1380" width="180" height="40" rx="8" fill="url(#uiGrad)" stroke="#c084fc" stroke-width="1.5"/>
+    <text x="720" y="1405" text-anchor="middle" fill="#ffffff" font-size="13" font-weight="bold">🏭 Form Tồn Kho</text>
+
+    <rect x="890" y="1380" width="180" height="40" rx="8" fill="url(#uiGrad)" stroke="#c084fc" stroke-width="1.5"/>
+    <text x="980" y="1405" text-anchor="middle" fill="#ffffff" font-size="13" font-weight="bold">📋 Form Đơn Hàng</text>
+
+    <rect x="1150" y="1380" width="180" height="40" rx="8" fill="url(#daoGrad)" stroke="#34d399" stroke-width="1.5"/>
+    <text x="1240" y="1405" text-anchor="middle" fill="#ffffff" font-size="13" font-weight="bold">⚙️ DAO Services</text>
+
+    <rect x="1380" y="1380" width="160" height="40" rx="8" fill="url(#dbGrad)" stroke="#fbbf24" stroke-width="1.5"/>
+    <text x="1460" y="1405" text-anchor="middle" fill="#ffffff" font-size="13" font-weight="bold">🗄️ SQL Database</text>
+  </g>
+</svg>

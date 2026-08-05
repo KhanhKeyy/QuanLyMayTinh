@@ -18,7 +18,7 @@ namespace QuanLyBanMayVT.DataAccess
             try
             {
                 using var conn = DatabaseHelper.GetConnection();
-                using var cmd = new SqlCommand("SELECT * FROM DanhMucSanPham ORDER BY TenDanhMuc", conn);
+                using var cmd = new SqlCommand("SELECT * FROM DanhMucSanPham ORDER BY MaDanhMuc", conn);
                 using var r = cmd.ExecuteReader();
                 while (r.Read()) list.Add(MapRow(r));
             }
