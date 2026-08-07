@@ -1079,17 +1079,20 @@ namespace QuanLyBanMayVT
                     }
                 }
 
-                // 2. Chi phí nhập hàng từ PhieuNhapHang + ChiTietPhieuNhap
+                // 2. Chi phí vốn hàng bán — tính theo ngày bán hàng (70% giá bán × số lượng)
+                //    Cách này đảm bảo Chi phí luôn xuất hiện cùng ngày với Doanh thu
                 var dictChiPhi = new Dictionary<DateTime, decimal>();
                 const string sqlPN = @"
-                    SELECT CAST(pn.NgayNhap AS DATE) AS Ngay,
-                           SUM(ct.SoLuongNhap * ct.DonGiaNhap) AS ChiPhi
-                    FROM PhieuNhapHang pn
-                    INNER JOIN ChiTietPhieuNhap ct ON pn.MaPhieuNhap = ct.MaPhieuNhap
-                    WHERE pn.TrangThai = 'Da nhap kho'
-                      AND YEAR(pn.NgayNhap) = @Nam
-                      AND (@Thang = 0 OR MONTH(pn.NgayNhap) = @Thang)
-                    GROUP BY CAST(pn.NgayNhap AS DATE)";
+                    SELECT CAST(hd.NgayThanhToan AS DATE) AS Ngay,
+                           SUM(ct.SoLuong * sp.GiaBan * 0.7) AS ChiPhi
+                    FROM HoaDon hd
+                    INNER JOIN DonHang   dh ON hd.MaDonHang  = dh.MaDonHang
+                    INNER JOIN ChiTietDonHang ct ON dh.MaDonHang = ct.MaDonHang
+                    INNER JOIN SanPham   sp ON ct.MaSanPham  = sp.MaSanPham
+                    WHERE hd.TrangThaiThanhToan = 'Da thanh toan'
+                      AND YEAR(hd.NgayThanhToan)  = @Nam
+                      AND (@Thang = 0 OR MONTH(hd.NgayThanhToan) = @Thang)
+                    GROUP BY CAST(hd.NgayThanhToan AS DATE)";
 
                 using (var cmd = new SqlCommand(sqlPN, conn))
                 {
