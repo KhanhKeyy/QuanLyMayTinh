@@ -1,3 +1,4 @@
+using System.Text.RegularExpressions;
 using QuanLyBanMayVT.Common;
 using QuanLyBanMayVT.DataAccess;
 using QuanLyBanMayVT.Models;
@@ -168,33 +169,136 @@ namespace QuanLyBanMayVT
 
         private void BtnLuu_Click(object? sender, EventArgs e)
         {
-            if (string.IsNullOrWhiteSpace(txtHoTen.Text))
+            // 1. Validate Họ và tên
+            string hoTen = txtHoTen.Text.Trim();
+            if (string.IsNullOrWhiteSpace(hoTen))
             {
-                MessageBox.Show("Vui lòng nhập họ tên nhân viên.", "Thông báo", MessageBoxButtons.OK, MessageBoxIcon.Warning);
+                MessageBox.Show("Vui lòng nhập họ và tên nhân viên.", "Cảnh báo", MessageBoxButtons.OK, MessageBoxIcon.Warning);
+                txtHoTen.Focus();
+                return;
+            }
+            if (hoTen.Length < 2 || hoTen.Length > 100)
+            {
+                MessageBox.Show("Họ và tên phải có độ dài từ 2 đến 100 ký tự.", "Cảnh báo", MessageBoxButtons.OK, MessageBoxIcon.Warning);
+                txtHoTen.Focus();
+                txtHoTen.SelectAll();
+                return;
+            }
+            if (Regex.IsMatch(hoTen, @"[0-9]"))
+            {
+                MessageBox.Show("Họ và tên không được chứa chữ số.", "Cảnh báo", MessageBoxButtons.OK, MessageBoxIcon.Warning);
+                txtHoTen.Focus();
+                txtHoTen.SelectAll();
                 return;
             }
 
+            // 2. Validate Tên đăng nhập (khi thêm mới)
+            string tenDN = "";
+            if (_nvTarget == null)
+            {
+                tenDN = txtTenDangNhap?.Text.Trim() ?? "";
+                if (string.IsNullOrWhiteSpace(tenDN))
+                {
+                    MessageBox.Show("Vui lòng nhập tên đăng nhập cho nhân viên.", "Cảnh báo", MessageBoxButtons.OK, MessageBoxIcon.Warning);
+                    txtTenDangNhap?.Focus();
+                    return;
+                }
+                if (tenDN.Length < 4 || tenDN.Length > 30)
+                {
+                    MessageBox.Show("Tên đăng nhập phải từ 4 đến 30 ký tự.", "Cảnh báo", MessageBoxButtons.OK, MessageBoxIcon.Warning);
+                    txtTenDangNhap?.Focus();
+                    txtTenDangNhap?.SelectAll();
+                    return;
+                }
+                if (!Regex.IsMatch(tenDN, @"^[a-zA-Z0-9_]+$"))
+                {
+                    MessageBox.Show("Tên đăng nhập chỉ được chứa chữ cái không dấu, chữ số và dấu gạch dưới (_), không được chứa khoảng trắng.", "Cảnh báo", MessageBoxButtons.OK, MessageBoxIcon.Warning);
+                    txtTenDangNhap?.Focus();
+                    txtTenDangNhap?.SelectAll();
+                    return;
+                }
+                if (new TaiKhoanDAO().TonTaiTenDangNhap(tenDN))
+                {
+                    MessageBox.Show($"Tên đăng nhập '{tenDN}' đã được sử dụng.\nVui lòng chọn tên khác.", "Trùng tên đăng nhập", MessageBoxButtons.OK, MessageBoxIcon.Warning);
+                    txtTenDangNhap?.Focus();
+                    txtTenDangNhap?.SelectAll();
+                    return;
+                }
+            }
+
+            // 3. Validate Số điện thoại (nếu có nhập)
+            string sdt = txtSDT.Text.Trim();
+            var allNV = new NhanVienDAO().GetAll();
+            int currentId = _nvTarget?.MaNhanVien ?? 0;
+
+            if (!string.IsNullOrEmpty(sdt))
+            {
+                if (!Regex.IsMatch(sdt, @"^0\d{9}$"))
+                {
+                    MessageBox.Show("Số điện thoại không hợp lệ!\nVui lòng nhập đúng 10 chữ số và bắt đầu bằng số 0 (Ví dụ: 0987654321).", "Cảnh báo", MessageBoxButtons.OK, MessageBoxIcon.Warning);
+                    txtSDT.Focus();
+                    txtSDT.SelectAll();
+                    return;
+                }
+                if (allNV.Any(n => n.MaNhanVien != currentId && n.SoDienThoai != null && n.SoDienThoai.Trim() == sdt))
+                {
+                    MessageBox.Show($"Số điện thoại '{sdt}' đã được đăng ký cho một nhân viên khác.", "Trùng số điện thoại", MessageBoxButtons.OK, MessageBoxIcon.Warning);
+                    txtSDT.Focus();
+                    txtSDT.SelectAll();
+                    return;
+                }
+            }
+
+            // 4. Validate Email (nếu có nhập)
+            string email = txtEmail.Text.Trim();
+            if (!string.IsNullOrEmpty(email))
+            {
+                if (!Regex.IsMatch(email, @"^[^@\s]+@[^@\s]+\.[^@\s]+$"))
+                {
+                    MessageBox.Show("Email không hợp lệ!\nVui lòng nhập đúng định dạng email (Ví dụ: user@domain.com).", "Cảnh báo", MessageBoxButtons.OK, MessageBoxIcon.Warning);
+                    txtEmail.Focus();
+                    txtEmail.SelectAll();
+                    return;
+                }
+                if (allNV.Any(n => n.MaNhanVien != currentId && n.Email != null && n.Email.Trim().Equals(email, StringComparison.OrdinalIgnoreCase)))
+                {
+                    MessageBox.Show($"Email '{email}' đã được đăng ký cho một nhân viên khác.", "Trùng Email", MessageBoxButtons.OK, MessageBoxIcon.Warning);
+                    txtEmail.Focus();
+                    txtEmail.SelectAll();
+                    return;
+                }
+            }
+
+            // 5. Validate Ngày vào làm
+            DateTime nvl = dtpNgayVaoLam.Value;
+            if (nvl.Date > DateTime.Today.AddDays(30))
+            {
+                MessageBox.Show("Ngày vào làm không được vượt quá 30 ngày so với hiện tại.", "Cảnh báo", MessageBoxButtons.OK, MessageBoxIcon.Warning);
+                dtpNgayVaoLam.Focus();
+                return;
+            }
+            if (nvl.Year < 2000)
+            {
+                MessageBox.Show("Ngày vào làm không hợp lệ (phải từ năm 2000 trở lại đây).", "Cảnh báo", MessageBoxButtons.OK, MessageBoxIcon.Warning);
+                dtpNgayVaoLam.Focus();
+                return;
+            }
+
+            // Khởi tạo model và Lưu
             var nv = new NhanVien
             {
-                MaNhanVien = _nvTarget?.MaNhanVien ?? 0,
-                HoTen = txtHoTen.Text.Trim(),
+                MaNhanVien = currentId,
+                HoTen = hoTen,
                 ChucVu = cboChucVu.SelectedItem?.ToString() ?? "NhanVienBanHang",
-                SoDienThoai = txtSDT.Text.Trim(),
-                Email = txtEmail.Text.Trim(),
-                NgayVaoLam = dtpNgayVaoLam.Value,
+                SoDienThoai = sdt,
+                Email = email,
+                NgayVaoLam = nvl,
                 MaTaiKhoan = _nvTarget?.MaTaiKhoan ?? 0
             };
 
             bool success;
             if (_nvTarget == null)
             {
-                if (txtTenDangNhap != null && string.IsNullOrWhiteSpace(txtTenDangNhap.Text))
-                {
-                    MessageBox.Show("Vui lòng nhập tên đăng nhập cho nhân viên.", "Thông báo", MessageBoxButtons.OK, MessageBoxIcon.Warning);
-                    return;
-                }
-
-                string tenDN = txtTenDangNhap?.Text.Trim() ?? "user" + DateTime.Now.Ticks % 1000;
                 string passHash = PasswordHasher.Hash("123456");
                 success = new NhanVienDAO().Insert(nv, tenDN, passHash);
             }
@@ -212,3 +316,4 @@ namespace QuanLyBanMayVT
         }
     }
 }
+

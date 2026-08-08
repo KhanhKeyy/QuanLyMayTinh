@@ -463,6 +463,15 @@ namespace QuanLyBanMayVT
             if (dgvPhieuNhap.CurrentRow == null) return;
             int maPN = (int)dgvPhieuNhap.CurrentRow.Cells["MaPhieuNhap"].Value;
 
+            // Kiểm tra trạng thái — không cho duyệt lại phiếu đã nhập kho
+            string trangThai = dgvPhieuNhap.CurrentRow.Cells["TrangThai"].Value?.ToString() ?? "";
+            if (trangThai.Contains("Đã nhập kho") || trangThai.Contains("Da nhap kho"))
+            {
+                MessageBox.Show($"Phiếu nhập #{maPN} đã được duyệt và nhập kho trước đó.\nKhông thể duyệt lại.",
+                    "Thông báo", MessageBoxButtons.OK, MessageBoxIcon.Warning);
+                return;
+            }
+
             var res = MessageBox.Show($"Xác nhận duyệt phiếu nhập #{maPN} và cộng số lượng vào tồn kho?", "Xác nhận", MessageBoxButtons.YesNo, MessageBoxIcon.Question);
             if (res == DialogResult.Yes)
             {

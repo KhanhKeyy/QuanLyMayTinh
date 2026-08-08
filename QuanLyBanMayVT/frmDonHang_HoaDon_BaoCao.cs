@@ -606,6 +606,15 @@ namespace QuanLyBanMayVT
             if (dgvHoaDon.CurrentRow == null) return;
             int maHD = (int)dgvHoaDon.CurrentRow.Cells["MaHoaDon"].Value;
 
+            // Kiểm tra trạng thái hiện tại — không cho xác nhận lại nếu đã thanh toán
+            string trangThai = dgvHoaDon.CurrentRow.Cells["TrangThai"].Value?.ToString() ?? "";
+            if (trangThai.Contains("Đã thanh toán") || trangThai.Contains("Da thanh toan"))
+            {
+                MessageBox.Show($"Hóa đơn #{maHD} đã được thanh toán trước đó.\nKhông thể xác nhận lại.",
+                    "Thông báo", MessageBoxButtons.OK, MessageBoxIcon.Warning);
+                return;
+            }
+
             var res = MessageBox.Show($"Xác nhận khách hàng đã thanh toán hóa đơn #{maHD}?\n(Hệ thống sẽ cập nhật đơn hàng thành Hoàn Tất và giảm tồn kho)",
                 "Xác nhận thanh toán", MessageBoxButtons.YesNo, MessageBoxIcon.Question);
 
@@ -1528,24 +1537,33 @@ namespace QuanLyBanMayVT
                 try
                 {
                     var sb = new System.Text.StringBuilder();
-                    // Append headers
-                    var colHeaders = new List<string>();
-                    foreach (DataGridViewColumn col in dgvThongKe.Columns) colHeaders.Add(col.HeaderText);
-                    sb.AppendLine(string.Join(",", colHeaders));
 
-                    foreach (DataGridViewRow row in dgvThongKe.Rows)
+                    if (_loaiBaoCaoMode == "DoanhThu")
                     {
-                        if (row.IsNewRow) continue;
-                        var rowVals = new List<string>();
-                        foreach (DataGridViewColumn col in dgvThongKe.Columns)
-                        {
-                            string val = row.Cells[col.Index].Value?.ToString()?.Replace(",", "") ?? "";
-                            rowVals.Add($"\"{val}\"");
-                        }
-                        sb.AppendLine(string.Join(",", rowVals));
+                        sb.AppendLine("STT,Ngày,Doanh Thu,Chi Phí,Lợi Nhuận,Số Hóa Đơn");
+                        foreach (var r in _fullDataList)
+                            sb.AppendLine($"{r.STT},\"{r.Ngay}\",{r.DoanhThu},{r.ChiPhi},{r.LoiNhuan},{r.SoHoaDon}");
                     }
+                    else if (_loaiBaoCaoMode == "TonKho")
+                    {
+                        sb.AppendLine("STT,Mã SP,Tên Sản Phẩm,Danh Mục,Số Lượng Tồn,Mức Tối Thiểu,Cần Nhập Thêm,Trạng Thái");
+                        foreach (var r in _fullTonKhoList)
+                            sb.AppendLine($"{r.STT},{r.MaSanPham},\"{r.TenSanPham}\",\"{r.TenDanhMuc}\",{r.SoLuongTon},{r.MucTonToiThieu},{r.CanNhapThem},\"{r.TrangThai}\"");
+                    }
+                    else if (_loaiBaoCaoMode == "BanChay")
+                    {
+                        sb.AppendLine("STT,Mã SP,Tên Sản Phẩm,Danh Mục,Số Lượng Đã Bán,Doanh Thu");
+                        foreach (var r in _fullBanChayList)
+                            sb.AppendLine($"{r.STT},{r.MaSanPham},\"{r.TenSanPham}\",\"{r.TenDanhMuc}\",{r.TongDaBan},{r.TongDoanhThu}");
+                    }
+
                     System.IO.File.WriteAllText(sfd.FileName, sb.ToString(), System.Text.Encoding.UTF8);
-                    MessageBox.Show("Đã xuất báo cáo thành công!", "Thông báo", MessageBoxButtons.OK, MessageBoxIcon.Information);
+
+                    int totalRows = _loaiBaoCaoMode == "DoanhThu"  ? _fullDataList.Count
+                                 : _loaiBaoCaoMode == "TonKho"    ? _fullTonKhoList.Count
+                                                                   : _fullBanChayList.Count;
+                    MessageBox.Show($"Đã xuất toàn bộ {totalRows} dòng thành công!",
+                        "Thông báo", MessageBoxButtons.OK, MessageBoxIcon.Information);
                 }
                 catch (Exception ex)
                 {
