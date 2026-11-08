@@ -112,4 +112,4 @@ Mật khẩu chung: `123456` (chỉ dùng cho môi trường demo)
 
 ## Tác giả
 
-Đào Duy Khánh · Đại học Kinh tế - Kỹ thuật Công nghiệp (UNETI)
+KhanhKeyy, ThaoNoa, Kachien712 · Đại học Kinh tế - Kỹ thuật Công nghiệp (UNETI)
